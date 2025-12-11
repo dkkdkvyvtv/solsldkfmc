@@ -1,6 +1,5 @@
 import telebot
 from telebot import types
-import sqlite3
 import json
 import os
 import requests
@@ -83,8 +82,8 @@ def add_section_id(message):
     
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id FROM sections WHERE name = ?', (section_data['id'],))
-    existing = cursor.fetchone()
+    db.execute(cursor, 'SELECT id FROM sections WHERE name = ?', (section_data['id'],))
+    existing = db.fetchone(cursor)
     conn.close()
     
     if existing:
@@ -123,7 +122,7 @@ def add_section_order(message, section_data):
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('''
+        db.execute(cursor, '''
             INSERT INTO sections (name, display_name, icon, sort_order)
             VALUES (?, ?, ?, ?)
         ''', (
@@ -161,12 +160,12 @@ def delete_section_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT id, name, display_name FROM sections 
         WHERE is_active = 1
         ORDER BY sort_order
     ''')
-    sections = cursor.fetchall()
+    sections = db.fetchall(cursor)
     conn.close()
     
     if not sections:
@@ -193,12 +192,12 @@ def delete_section_confirm(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name, display_name FROM sections WHERE id = ?', (section_id,))
-    section = cursor.fetchone()
+    db.execute(cursor, 'SELECT name, display_name FROM sections WHERE id = ?', (section_id,))
+    section = db.fetchone(cursor)
     
     if section:
-        cursor.execute('SELECT COUNT(*) FROM categories WHERE section_id = ? AND is_active = 1', (section_id,))
-        category_count = cursor.fetchone()[0]
+        db.execute(cursor, 'SELECT COUNT(*) FROM categories WHERE section_id = ? AND is_active = 1', (section_id,))
+        category_count = db.fetchone(cursor)[0]
         
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(
@@ -230,10 +229,10 @@ def delete_section_final(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name FROM sections WHERE id = ?', (section_id,))
-    section_name = cursor.fetchone()[0]
+    db.execute(cursor, 'SELECT name FROM sections WHERE id = ?', (section_id,))
+    section_name = db.fetchone(cursor)[0]
     
-    cursor.execute('UPDATE sections SET is_active = 0 WHERE id = ?', (section_id,))
+    db.execute(cursor, 'UPDATE sections SET is_active = 0 WHERE id = ?', (section_id,))
     
     conn.commit()
     conn.close()
@@ -260,13 +259,13 @@ def edit_section_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT id, name, display_name, icon, sort_order 
         FROM sections 
         WHERE is_active = 1
         ORDER BY sort_order
     ''')
-    sections = cursor.fetchall()
+    sections = db.fetchall(cursor)
     conn.close()
     
     if not sections:
@@ -293,8 +292,8 @@ def edit_section_menu(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name, display_name, icon, sort_order FROM sections WHERE id = ?', (section_id,))
-    section = cursor.fetchone()
+    db.execute(cursor, 'SELECT name, display_name, icon, sort_order FROM sections WHERE id = ?', (section_id,))
+    section = db.fetchone(cursor)
     conn.close()
     
     if section:
@@ -336,7 +335,7 @@ def update_section_name(message, section_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE sections SET display_name = ? WHERE id = ?', (new_name, section_id))
+    db.execute(cursor, 'UPDATE sections SET display_name = ? WHERE id = ?', (new_name, section_id))
     conn.commit()
     conn.close()
     
@@ -362,7 +361,7 @@ def update_section_icon(message, section_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE sections SET icon = ? WHERE id = ?', (new_icon, section_id))
+    db.execute(cursor, 'UPDATE sections SET icon = ? WHERE id = ?', (new_icon, section_id))
     conn.commit()
     conn.close()
     
@@ -389,7 +388,7 @@ def update_section_order(message, section_id):
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('UPDATE sections SET sort_order = ? WHERE id = ?', (new_order, section_id))
+        db.execute(cursor, 'UPDATE sections SET sort_order = ? WHERE id = ?', (new_order, section_id))
         conn.commit()
         conn.close()
         
@@ -414,7 +413,7 @@ def list_sections(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT s.id, s.name, s.display_name, s.icon, s.sort_order, s.is_active,
                COUNT(c.id) as category_count
         FROM sections s
@@ -422,7 +421,7 @@ def list_sections(message):
         GROUP BY s.id
         ORDER BY s.sort_order
     ''')
-    sections = cursor.fetchall()
+    sections = db.fetchall(cursor)
     conn.close()
     
     if not sections:
@@ -466,8 +465,8 @@ def add_category_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT id, display_name FROM sections WHERE is_active = 1 ORDER BY sort_order')
-    sections = cursor.fetchall()
+    db.execute(cursor, 'SELECT id, display_name FROM sections WHERE is_active = 1 ORDER BY sort_order')
+    sections = db.fetchall(cursor)
     conn.close()
     
     if not sections:
@@ -490,8 +489,8 @@ def add_category_section(message):
         
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT id FROM sections WHERE id = ? AND is_active = 1', (section_id,))
-        valid_section = cursor.fetchone()
+        db.execute(cursor, 'SELECT id FROM sections WHERE id = ? AND is_active = 1', (section_id,))
+        valid_section = db.fetchone(cursor)
         conn.close()
         
         if not valid_section:
@@ -517,8 +516,8 @@ def add_category_id(message, category_data):
     
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id FROM categories WHERE name = ?', (category_data['id'],))
-    existing = cursor.fetchone()
+    db.execute(cursor, 'SELECT id FROM categories WHERE name = ?', (category_data['id'],))
+    existing = db.fetchone(cursor)
     conn.close()
     
     if existing:
@@ -557,7 +556,7 @@ def add_category_order(message, category_data):
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('''
+        db.execute(cursor, '''
             INSERT INTO categories (name, display_name, icon, section_id, sort_order)
             VALUES (?, ?, ?, ?, ?)
         ''', (
@@ -596,14 +595,14 @@ def assign_category_to_section_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT c.id, c.name, c.display_name, s.display_name 
         FROM categories c
         LEFT JOIN sections s ON c.section_id = s.id
         WHERE c.is_active = 1
         ORDER BY c.sort_order
     ''')
-    categories = cursor.fetchall()
+    categories = db.fetchall(cursor)
     conn.close()
     
     if not categories:
@@ -631,8 +630,8 @@ def assign_category_select_section(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT id, display_name FROM sections WHERE is_active = 1 ORDER BY sort_order')
-    sections = cursor.fetchall()
+    db.execute(cursor, 'SELECT id, display_name FROM sections WHERE is_active = 1 ORDER BY sort_order')
+    sections = db.fetchall(cursor)
     conn.close()
     
     if not sections:
@@ -670,14 +669,14 @@ def assign_category_final(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE categories SET section_id = ? WHERE id = ?', (section_id, category_id))
+    db.execute(cursor, 'UPDATE categories SET section_id = ? WHERE id = ?', (section_id, category_id))
     conn.commit()
     
-    cursor.execute('SELECT display_name FROM categories WHERE id = ?', (category_id,))
-    category_name = cursor.fetchone()[0]
+    db.execute(cursor, 'SELECT display_name FROM categories WHERE id = ?', (category_id,))
+    category_name = db.fetchone(cursor)[0]
     
-    cursor.execute('SELECT display_name FROM sections WHERE id = ?', (section_id,))
-    section_name = cursor.fetchone()[0]
+    db.execute(cursor, 'SELECT display_name FROM sections WHERE id = ?', (section_id,))
+    section_name = db.fetchone(cursor)[0]
     conn.close()
     
     bot.edit_message_text(
@@ -693,11 +692,11 @@ def remove_category_from_section(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE categories SET section_id = NULL WHERE id = ?', (category_id,))
+    db.execute(cursor, 'UPDATE categories SET section_id = NULL WHERE id = ?', (category_id,))
     conn.commit()
     
-    cursor.execute('SELECT display_name FROM categories WHERE id = ?', (category_id,))
-    category_name = cursor.fetchone()[0]
+    db.execute(cursor, 'SELECT display_name FROM categories WHERE id = ?', (category_id,))
+    category_name = db.fetchone(cursor)[0]
     conn.close()
     
     bot.edit_message_text(
@@ -714,14 +713,14 @@ def delete_category_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT c.id, c.name, c.display_name, s.display_name 
         FROM categories c
         LEFT JOIN sections s ON c.section_id = s.id
         WHERE c.is_active = 1
         ORDER BY c.sort_order
     ''')
-    categories = cursor.fetchall()
+    categories = db.fetchall(cursor)
     conn.close()
     
     if not categories:
@@ -749,12 +748,12 @@ def delete_category_confirm(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name, display_name FROM categories WHERE id = ?', (category_id,))
-    category = cursor.fetchone()
+    db.execute(cursor, 'SELECT name, display_name FROM categories WHERE id = ?', (category_id,))
+    category = db.fetchone(cursor)
     
     if category:
-        cursor.execute('SELECT COUNT(*) FROM products WHERE category = ? AND is_active = 1', (category[0],))
-        product_count = cursor.fetchone()[0]
+        db.execute(cursor, 'SELECT COUNT(*) FROM products WHERE category = ? AND is_active = 1', (category[0],))
+        product_count = db.fetchone(cursor)[0]
         
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(
@@ -786,10 +785,10 @@ def delete_category_final(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name FROM categories WHERE id = ?', (category_id,))
-    category_name = cursor.fetchone()[0]
+    db.execute(cursor, 'SELECT name FROM categories WHERE id = ?', (category_id,))
+    category_name = db.fetchone(cursor)[0]
     
-    cursor.execute('UPDATE categories SET is_active = 0 WHERE id = ?', (category_id,))
+    db.execute(cursor, 'UPDATE categories SET is_active = 0 WHERE id = ?', (category_id,))
     
     conn.commit()
     conn.close()
@@ -816,14 +815,14 @@ def edit_category_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT c.id, c.name, c.display_name, c.icon, c.sort_order, s.display_name
         FROM categories c
         LEFT JOIN sections s ON c.section_id = s.id
         WHERE c.is_active = 1
         ORDER BY c.sort_order
     ''')
-    categories = cursor.fetchall()
+    categories = db.fetchall(cursor)
     conn.close()
     
     if not categories:
@@ -851,8 +850,8 @@ def edit_category_menu(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name, display_name, icon, sort_order FROM categories WHERE id = ?', (category_id,))
-    category = cursor.fetchone()
+    db.execute(cursor, 'SELECT name, display_name, icon, sort_order FROM categories WHERE id = ?', (category_id,))
+    category = db.fetchone(cursor)
     conn.close()
     
     if category:
@@ -888,8 +887,8 @@ def edit_category_section(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT id, display_name FROM sections WHERE is_active = 1 ORDER BY sort_order')
-    sections = cursor.fetchall()
+    db.execute(cursor, 'SELECT id, display_name FROM sections WHERE is_active = 1 ORDER BY sort_order')
+    sections = db.fetchall(cursor)
     conn.close()
     
     if not sections:
@@ -923,7 +922,7 @@ def update_category_section(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE categories SET section_id = ? WHERE id = ?', (section_id, category_id))
+    db.execute(cursor, 'UPDATE categories SET section_id = ? WHERE id = ?', (section_id, category_id))
     conn.commit()
     conn.close()
     
@@ -940,7 +939,7 @@ def remove_category_section(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE categories SET section_id = NULL WHERE id = ?', (category_id,))
+    db.execute(cursor, 'UPDATE categories SET section_id = NULL WHERE id = ?', (category_id,))
     conn.commit()
     conn.close()
     
@@ -966,7 +965,7 @@ def update_category_name(message, category_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE categories SET display_name = ? WHERE id = ?', (new_name, category_id))
+    db.execute(cursor, 'UPDATE categories SET display_name = ? WHERE id = ?', (new_name, category_id))
     conn.commit()
     conn.close()
     
@@ -992,7 +991,7 @@ def update_category_icon(message, category_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE categories SET icon = ? WHERE id = ?', (new_icon, category_id))
+    db.execute(cursor, 'UPDATE categories SET icon = ? WHERE id = ?', (new_icon, category_id))
     conn.commit()
     conn.close()
     
@@ -1019,7 +1018,7 @@ def update_category_order(message, category_id):
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('UPDATE categories SET sort_order = ? WHERE id = ?', (new_order, category_id))
+        db.execute(cursor, 'UPDATE categories SET sort_order = ? WHERE id = ?', (new_order, category_id))
         conn.commit()
         conn.close()
         
@@ -1068,8 +1067,8 @@ def add_city_confirm(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT DISTINCT city FROM pickup_locations WHERE city = ?', (city_name,))
-    existing = cursor.fetchone()
+    db.execute(cursor, 'SELECT DISTINCT city FROM pickup_locations WHERE city = ?', (city_name,))
+    existing = db.fetchone(cursor)
     
     if existing:
         bot.send_message(message.chat.id, f"❌ Город '{city_name}' уже существует!")
@@ -1077,12 +1076,12 @@ def add_city_confirm(message):
         return
     
     # Создаем пункты выдачи по умолчанию для нового города
-    cursor.execute('''
+    db.execute(cursor, '''
         INSERT INTO pickup_locations (name, address, city, location_type, delivery_price)
         VALUES (?, ?, ?, 'pickup', 0)
     ''', ('Пункт выдачи', 'Укажите адрес', city_name))
     
-    cursor.execute('''
+    db.execute(cursor, '''
         INSERT INTO pickup_locations (name, address, city, location_type, delivery_price)
         VALUES (?, ?, ?, 'delivery', 300)
     ''', ('Доставка по городу', 'Доставка курьером', city_name))
@@ -1104,8 +1103,8 @@ def delete_city_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT DISTINCT city FROM pickup_locations WHERE city IS NOT NULL ORDER BY city')
-    cities = cursor.fetchall()
+    db.execute(cursor, 'SELECT DISTINCT city FROM pickup_locations WHERE city IS NOT NULL ORDER BY city')
+    cities = db.fetchall(cursor)
     conn.close()
     
     if not cities:
@@ -1133,8 +1132,8 @@ def delete_city_confirm(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT COUNT(*) FROM pickup_locations WHERE city = ?', (city_name,))
-    location_count = cursor.fetchone()[0]
+    db.execute(cursor, 'SELECT COUNT(*) FROM pickup_locations WHERE city = ?', (city_name,))
+    location_count = db.fetchone(cursor)[0]
     
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(
@@ -1163,7 +1162,7 @@ def delete_city_final(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('DELETE FROM pickup_locations WHERE city = ?', (city_name,))
+    db.execute(cursor, 'DELETE FROM pickup_locations WHERE city = ?', (city_name,))
     conn.commit()
     conn.close()
     
@@ -1189,7 +1188,7 @@ def list_cities(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT city, 
                COUNT(CASE WHEN location_type = 'pickup' THEN 1 END) as pickup_count,
                COUNT(CASE WHEN location_type = 'delivery' THEN 1 END) as delivery_count
@@ -1198,7 +1197,7 @@ def list_cities(message):
         GROUP BY city
         ORDER BY city
     ''')
-    cities = cursor.fetchall()
+    cities = db.fetchall(cursor)
     conn.close()
     
     if not cities:
@@ -1238,8 +1237,8 @@ def add_pickup_location(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT DISTINCT city FROM pickup_locations WHERE city IS NOT NULL ORDER BY city')
-    cities = cursor.fetchall()
+    db.execute(cursor, 'SELECT DISTINCT city FROM pickup_locations WHERE city IS NOT NULL ORDER BY city')
+    cities = db.fetchall(cursor)
     conn.close()
     
     if not cities:
@@ -1261,8 +1260,8 @@ def add_location_city(message):
     
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT city FROM pickup_locations WHERE city = ?', (city,))
-    valid_city = cursor.fetchone()
+    db.execute(cursor, 'SELECT DISTINCT city FROM pickup_locations WHERE city = ?', (city,))
+    valid_city = db.fetchone(cursor)
     conn.close()
     
     if not valid_city:
@@ -1334,7 +1333,7 @@ def save_location(pickup_data, chat_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         INSERT INTO pickup_locations (name, address, city, location_type, delivery_price)
         VALUES (?, ?, ?, ?, ?)
     ''', (
@@ -1368,13 +1367,13 @@ def edit_location_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT id, name, address, city, location_type, delivery_price 
         FROM pickup_locations 
         WHERE is_active = 1
         ORDER BY city, location_type
     ''')
-    locations = cursor.fetchall()
+    locations = db.fetchall(cursor)
     conn.close()
     
     if not locations:
@@ -1402,8 +1401,8 @@ def edit_location_menu(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name, address, city, location_type, delivery_price FROM pickup_locations WHERE id = ?', (location_id,))
-    location = cursor.fetchone()
+    db.execute(cursor, 'SELECT name, address, city, location_type, delivery_price FROM pickup_locations WHERE id = ?', (location_id,))
+    location = db.fetchone(cursor)
     conn.close()
     
     if location:
@@ -1451,7 +1450,7 @@ def update_location_name(message, location_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE pickup_locations SET name = ? WHERE id = ?', (new_name, location_id))
+    db.execute(cursor, 'UPDATE pickup_locations SET name = ? WHERE id = ?', (new_name, location_id))
     conn.commit()
     conn.close()
     
@@ -1477,7 +1476,7 @@ def update_location_address(message, location_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE pickup_locations SET address = ? WHERE id = ?', (new_address, location_id))
+    db.execute(cursor, 'UPDATE pickup_locations SET address = ? WHERE id = ?', (new_address, location_id))
     conn.commit()
     conn.close()
     
@@ -1504,7 +1503,7 @@ def update_location_price(message, location_id):
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('UPDATE pickup_locations SET delivery_price = ? WHERE id = ?', (new_price, location_id))
+        db.execute(cursor, 'UPDATE pickup_locations SET delivery_price = ? WHERE id = ?', (new_price, location_id))
         conn.commit()
         conn.close()
         
@@ -1525,8 +1524,8 @@ def edit_location_city(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT DISTINCT city FROM pickup_locations WHERE city IS NOT NULL ORDER BY city')
-    cities = cursor.fetchall()
+    db.execute(cursor, 'SELECT DISTINCT city FROM pickup_locations WHERE city IS NOT NULL ORDER BY city')
+    cities = db.fetchall(cursor)
     conn.close()
     
     if not cities:
@@ -1557,7 +1556,7 @@ def update_location_city(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE pickup_locations SET city = ? WHERE id = ?', (city, location_id))
+    db.execute(cursor, 'UPDATE pickup_locations SET city = ? WHERE id = ?', (city, location_id))
     conn.commit()
     conn.close()
     
@@ -1579,13 +1578,13 @@ def delete_pickup_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT id, name, address, city, location_type 
         FROM pickup_locations 
         WHERE is_active = 1
         ORDER BY city, location_type
     ''')
-    locations = cursor.fetchall()
+    locations = db.fetchall(cursor)
     conn.close()
     
     if not locations:
@@ -1613,8 +1612,8 @@ def delete_location_confirm(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name, address, city, location_type FROM pickup_locations WHERE id = ?', (location_id,))
-    location = cursor.fetchone()
+    db.execute(cursor, 'SELECT name, address, city, location_type FROM pickup_locations WHERE id = ?', (location_id,))
+    location = db.fetchone(cursor)
     
     if location:
         markup = types.InlineKeyboardMarkup()
@@ -1645,7 +1644,7 @@ def delete_location_final(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE pickup_locations SET is_active = 0 WHERE id = ?', (location_id,))
+    db.execute(cursor, 'UPDATE pickup_locations SET is_active = 0 WHERE id = ?', (location_id,))
     conn.commit()
     conn.close()
     
@@ -1671,12 +1670,12 @@ def list_locations(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT id, name, address, city, location_type, delivery_price, is_active 
         FROM pickup_locations
         ORDER BY city, location_type
     ''')
-    locations = cursor.fetchall()
+    locations = db.fetchall(cursor)
     conn.close()
     
     if not locations:
@@ -1710,14 +1709,14 @@ def list_categories(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT c.id, c.name, c.display_name, c.icon, c.sort_order, c.is_active,
                s.display_name as section_name
         FROM categories c
         LEFT JOIN sections s ON c.section_id = s.id
         ORDER BY c.sort_order
     ''')
-    categories = cursor.fetchall()
+    categories = db.fetchall(cursor)
     conn.close()
     
     if not categories:
@@ -1744,16 +1743,16 @@ def show_profit(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT SUM(total_amount) FROM orders WHERE status = 'completed'
     ''')
-    total_profit = cursor.fetchone()[0] or 0
+    total_profit = db.fetchone(cursor)[0] or 0
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT SUM(total_amount) FROM orders 
         WHERE status = 'completed' AND DATE(created_at) = DATE('now')
     ''')
-    today_profit = cursor.fetchone()[0] or 0
+    today_profit = db.fetchone(cursor)[0] or 0
     
     conn.close()
     
@@ -1786,8 +1785,8 @@ def add_product_start(message):
     
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT name, display_name FROM categories WHERE is_active = 1 ORDER BY sort_order')
-    categories = cursor.fetchall()
+    db.execute(cursor, 'SELECT name, display_name FROM categories WHERE is_active = 1 ORDER BY sort_order')
+    categories = db.fetchall(cursor)
     conn.close()
     
     if not categories:
@@ -1860,8 +1859,8 @@ def add_product_category(message, product_data):
     
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT name FROM categories WHERE name = ? AND is_active = 1', (category,))
-    valid_category = cursor.fetchone()
+    db.execute(cursor, 'SELECT name FROM categories WHERE name = ? AND is_active = 1', (category,))
+    valid_category = db.fetchone(cursor)
     conn.close()
     
     if not valid_category:
@@ -1888,7 +1887,7 @@ def add_product_specs(message, product_data):
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('''
+        db.execute(cursor, '''
             INSERT INTO products (name, description, price, image_path, category, specifications)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (
@@ -1924,8 +1923,8 @@ def delete_product_start(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT id, name FROM products WHERE is_active = 1')
-    products = cursor.fetchall()
+    db.execute(cursor, 'SELECT id, name FROM products WHERE is_active = 1')
+    products = db.fetchall(cursor)
     conn.close()
     
     if not products:
@@ -1952,8 +1951,8 @@ def delete_product_confirm(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT name FROM products WHERE id = ?', (product_id,))
-    product = cursor.fetchone()
+    db.execute(cursor, 'SELECT name FROM products WHERE id = ?', (product_id,))
+    product = db.fetchone(cursor)
     
     if product:
         markup = types.InlineKeyboardMarkup()
@@ -1982,7 +1981,7 @@ def delete_product_final(call):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('UPDATE products SET is_active = 0 WHERE id = ?', (product_id,))
+    db.execute(cursor, 'UPDATE products SET is_active = 0 WHERE id = ?', (product_id,))
     conn.commit()
     conn.close()
     
@@ -2008,13 +2007,13 @@ def list_products(message):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT p.id, p.name, p.price, p.category, p.is_active, c.display_name
         FROM products p
         LEFT JOIN categories c ON p.category = c.name
         ORDER BY p.created_at DESC
     ''')
-    products = cursor.fetchall()
+    products = db.fetchall(cursor)
     conn.close()
     
     if not products:
@@ -2041,4 +2040,3 @@ def back_to_main(message):
 if __name__ == '__main__':
     print("Админ бот запущен...")
     bot.polling(none_stop=True)
- 

@@ -142,8 +142,8 @@ def get_telegram_user_data():
         if user_id:
             conn = db.get_connection()
             cursor = conn.cursor()
-            cursor.execute('SELECT telegram_id, first_name, username, photo_url FROM users WHERE id = ?', (user_id,))
-            user = cursor.fetchone()
+            db.execute(cursor, 'SELECT telegram_id, first_name, username, photo_url FROM users WHERE id = ?', (user_id,))
+            user = db.fetchone(cursor)
             conn.close()
             
             if user:
@@ -178,14 +178,14 @@ def get_or_create_user(telegram_user_data):
         cursor = conn.cursor()
         
         # Проверяем, существует ли пользователь
-        cursor.execute('SELECT id, balance FROM users WHERE telegram_id = ?', (telegram_user_data['id'],))
-        user = cursor.fetchone()
+        db.execute(cursor, 'SELECT id, balance FROM users WHERE telegram_id = ?', (telegram_user_data['id'],))
+        user = db.fetchone(cursor)
         
         if user:
             user_id = user[0]
             balance = user[1]
             # Обновляем данные пользователя
-            cursor.execute('''
+            db.execute(cursor, '''
                 UPDATE users 
                 SET first_name = ?, username = ?, photo_url = ?
                 WHERE id = ?
@@ -197,7 +197,7 @@ def get_or_create_user(telegram_user_data):
             ))
         else:
             # Создаем нового пользователя
-            cursor.execute('''
+            db.execute(cursor, '''
                 INSERT INTO users (telegram_id, username, first_name, photo_url, balance)
                 VALUES (?, ?, ?, ?, ?)
             ''', (
@@ -207,7 +207,7 @@ def get_or_create_user(telegram_user_data):
                 telegram_user_data.get('photo_url', '/static/images/default-avatar.png'),
                 0.0
             ))
-            user_id = cursor.lastrowid
+            user_id = db.lastrowid(cursor)
             balance = 0.0
         
         conn.commit()
@@ -321,13 +321,13 @@ def catalog():
     cursor = conn.cursor()
     
     # Получаем разделы для фильтра
-    cursor.execute('''
+    db.execute(cursor, '''
         SELECT id, name, display_name, icon, sort_order
         FROM sections 
         WHERE is_active = 1
         ORDER BY sort_order
     ''')
-    sections_data = cursor.fetchall()
+    sections_data = db.fetchall(cursor)
     
     sections_list = []
     for section_data in sections_data:
@@ -355,13 +355,13 @@ def catalog():
     
     if section != 'all':
         # Получаем ID раздела
-        cursor.execute('SELECT id FROM sections WHERE name = ?', (section,))
-        section_row = cursor.fetchone()
+        db.execute(cursor, 'SELECT id FROM sections WHERE name = ?', (section,))
+        section_row = db.fetchone(cursor)
         if section_row:
             section_id = section_row[0]
             # Получаем категории в этом разделе
-            cursor.execute('SELECT name FROM categories WHERE section_id = ?', (section_id,))
-            section_categories = [row[0] for row in cursor.fetchall()]
+            db.execute(cursor, 'SELECT name FROM categories WHERE section_id = ?', (section_id,))
+            section_categories = [row[0] for row in db.fetchall(cursor)]
             
             if section_categories:
                 if category != 'all' and category not in section_categories:
@@ -381,8 +381,8 @@ def catalog():
     
     query += ' ORDER BY p.created_at DESC'
     
-    cursor.execute(query, params)
-    products_data = cursor.fetchall()
+    db.execute(cursor, query, params)
+    products_data = db.fetchall(cursor)
     conn.close()
     
     # Формируем список товаров
@@ -415,8 +415,8 @@ def product_detail(product_id):
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT * FROM products WHERE id = ? AND is_active = 1', (product_id,))
-    product_data = cursor.fetchone()
+    db.execute(cursor, 'SELECT * FROM products WHERE id = ? AND is_active = 1', (product_id,))
+    product_data = db.fetchone(cursor)
     conn.close()
     
     if not product_data:
@@ -515,7 +515,7 @@ def api_sections():
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT s.id, s.name, s.display_name, s.icon, s.sort_order,
                    COUNT(DISTINCT c.id) as category_count,
                    COUNT(DISTINCT p.id) as product_count
@@ -527,7 +527,7 @@ def api_sections():
             ORDER BY s.sort_order
         ''')
         
-        sections_data = cursor.fetchall()
+        sections_data = db.fetchall(cursor)
         conn.close()
         
         sections_list = []
@@ -555,7 +555,7 @@ def api_categories():
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT c.name, c.display_name, c.icon, s.display_name as section_name
             FROM categories c
             LEFT JOIN sections s ON c.section_id = s.id
@@ -563,7 +563,7 @@ def api_categories():
             ORDER BY c.sort_order
         ''')
         
-        categories_data = cursor.fetchall()
+        categories_data = db.fetchall(cursor)
         conn.close()
         
         categories_list = []
@@ -589,14 +589,14 @@ def api_categories_by_section(section_name):
         cursor = conn.cursor()
         
         if section_name == 'all':
-            cursor.execute('''
+            db.execute(cursor, '''
                 SELECT c.name, c.display_name, c.icon
                 FROM categories c
                 WHERE c.is_active = 1
                 ORDER BY c.sort_order
             ''')
         else:
-            cursor.execute('''
+            db.execute(cursor, '''
                 SELECT c.name, c.display_name, c.icon
                 FROM categories c
                 JOIN sections s ON c.section_id = s.id
@@ -604,7 +604,7 @@ def api_categories_by_section(section_name):
                 ORDER BY c.sort_order
             ''', (section_name,))
         
-        categories_data = cursor.fetchall()
+        categories_data = db.fetchall(cursor)
         conn.close()
         
         categories_list = []
@@ -629,7 +629,7 @@ def api_featured_products():
         cursor = conn.cursor()
         
         # Получаем активные разделы
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT s.id, s.name, s.display_name, s.icon
             FROM sections s
             WHERE s.is_active = 1
@@ -637,7 +637,7 @@ def api_featured_products():
             LIMIT 3
         ''')
         
-        sections_data = cursor.fetchall()
+        sections_data = db.fetchall(cursor)
         
         result = {}
         
@@ -645,7 +645,7 @@ def api_featured_products():
             section_id, section_name, display_name, icon = section
             
             # Получаем товары из этого раздела
-            cursor.execute('''
+            db.execute(cursor, '''
                 SELECT p.id, p.name, p.description, p.price, p.image_path, p.category
                 FROM products p
                 JOIN categories c ON p.category = c.name
@@ -654,7 +654,7 @@ def api_featured_products():
                 LIMIT 6
             ''', (section_id,))
             
-            products_data = cursor.fetchall()
+            products_data = db.fetchall(cursor)
             
             if products_data:
                 products_list = []
@@ -684,7 +684,7 @@ def api_featured_products():
             conn = db.get_connection()
             cursor = conn.cursor()
             
-            cursor.execute('''
+            db.execute(cursor, '''
                 SELECT p.id, p.name, p.description, p.price, p.image_path, p.category
                 FROM products p
                 WHERE p.is_active = 1
@@ -692,7 +692,7 @@ def api_featured_products():
                 LIMIT 6
             ''')
             
-            products_data = cursor.fetchall()
+            products_data = db.fetchall(cursor)
             conn.close()
             
             if products_data:
@@ -740,20 +740,20 @@ def api_cart_add():
         cursor = conn.cursor()
         
         # Проверяем существование товара
-        cursor.execute('SELECT id, name, price FROM products WHERE id = ? AND is_active = 1', (product_id,))
-        product = cursor.fetchone()
+        db.execute(cursor, 'SELECT id, name, price FROM products WHERE id = ? AND is_active = 1', (product_id,))
+        product = db.fetchone(cursor)
         
         if not product:
             conn.close()
             return jsonify({'success': False, 'error': 'Товар не найден'})
         
         # Проверяем, есть ли пользователь в базе
-        cursor.execute('SELECT id FROM users WHERE telegram_id = ?', (user_id,))
-        user = cursor.fetchone()
+        db.execute(cursor, 'SELECT id FROM users WHERE telegram_id = ?', (user_id,))
+        user = db.fetchone(cursor)
         
         if not user:
             # Создаем пользователя если его нет
-            cursor.execute('''
+            db.execute(cursor, '''
                 INSERT INTO users (telegram_id, first_name, username, photo_url, balance)
                 VALUES (?, ?, ?, ?, ?)
             ''', (
@@ -763,27 +763,27 @@ def api_cart_add():
                 user_data.get('photo_url', '/static/images/default-avatar.png'),
                 0.0
             ))
-            user_db_id = cursor.lastrowid
+            user_db_id = db.lastrowid(cursor)
         else:
             user_db_id = user[0]
         
         # Проверяем, есть ли товар уже в корзине
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT id, quantity FROM cart_items 
             WHERE user_id = ? AND product_id = ?
         ''', (user_db_id, product_id))
         
-        existing_item = cursor.fetchone()
+        existing_item = db.fetchone(cursor)
         
         if existing_item:
             # Увеличиваем количество
-            cursor.execute('''
+            db.execute(cursor, '''
                 UPDATE cart_items SET quantity = quantity + 1 
                 WHERE id = ?
             ''', (existing_item[0],))
         else:
             # Добавляем новый товар
-            cursor.execute('''
+            db.execute(cursor, '''
                 INSERT INTO cart_items (user_id, product_id, quantity)
                 VALUES (?, ?, 1)
             ''', (user_db_id, product_id))
@@ -808,8 +808,8 @@ def api_cart_items():
         cursor = conn.cursor()
         
         # Получаем ID пользователя в базе
-        cursor.execute('SELECT id FROM users WHERE telegram_id = ?', (user_id,))
-        user = cursor.fetchone()
+        db.execute(cursor, 'SELECT id FROM users WHERE telegram_id = ?', (user_id,))
+        user = db.fetchone(cursor)
         
         if not user:
             conn.close()
@@ -818,7 +818,7 @@ def api_cart_items():
         user_db_id = user[0]
         
         # Получаем товары в корзине
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT p.id, p.name, p.price, p.image_path, ci.quantity
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
@@ -826,7 +826,7 @@ def api_cart_items():
             ORDER BY ci.created_at DESC
         ''', (user_db_id,))
         
-        cart_items_data = cursor.fetchall()
+        cart_items_data = db.fetchall(cursor)
         conn.close()
         
         items = []
@@ -871,8 +871,8 @@ def api_cart_update():
         cursor = conn.cursor()
         
         # Получаем ID пользователя в базе
-        cursor.execute('SELECT id FROM users WHERE telegram_id = ?', (user_id,))
-        user = cursor.fetchone()
+        db.execute(cursor, 'SELECT id FROM users WHERE telegram_id = ?', (user_id,))
+        user = db.fetchone(cursor)
         
         if not user:
             conn.close()
@@ -882,11 +882,11 @@ def api_cart_update():
         
         if quantity == 0:
             # Удаляем товар из корзины
-            cursor.execute('DELETE FROM cart_items WHERE user_id = ? AND product_id = ?', 
-                          (user_db_id, product_id))
+            db.execute(cursor, 'DELETE FROM cart_items WHERE user_id = ? AND product_id = ?', 
+                      (user_db_id, product_id))
         else:
             # Обновляем количество
-            cursor.execute('''
+            db.execute(cursor, '''
                 UPDATE cart_items SET quantity = ? 
                 WHERE user_id = ? AND product_id = ?
             ''', (quantity, user_db_id, product_id))
@@ -917,8 +917,8 @@ def api_cart_remove():
         cursor = conn.cursor()
         
         # Получаем ID пользователя в базе
-        cursor.execute('SELECT id FROM users WHERE telegram_id = ?', (user_id,))
-        user = cursor.fetchone()
+        db.execute(cursor, 'SELECT id FROM users WHERE telegram_id = ?', (user_id,))
+        user = db.fetchone(cursor)
         
         if not user:
             conn.close()
@@ -926,8 +926,8 @@ def api_cart_remove():
         
         user_db_id = user[0]
         
-        cursor.execute('DELETE FROM cart_items WHERE user_id = ? AND product_id = ?', 
-                      (user_db_id, product_id))
+        db.execute(cursor, 'DELETE FROM cart_items WHERE user_id = ? AND product_id = ?', 
+                  (user_db_id, product_id))
         
         conn.commit()
         conn.close()
@@ -945,14 +945,14 @@ def api_cities():
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT DISTINCT city 
             FROM pickup_locations 
             WHERE city IS NOT NULL AND is_active = 1
             ORDER BY city
         ''')
         
-        cities_data = cursor.fetchall()
+        cities_data = db.fetchall(cursor)
         conn.close()
         
         cities_list = [city[0] for city in cities_data]
@@ -986,8 +986,8 @@ def api_pickup_locations():
         
         query += ' ORDER BY city, name'
         
-        cursor.execute(query, params)
-        locations_data = cursor.fetchall()
+        db.execute(cursor, query, params)
+        locations_data = db.fetchall(cursor)
         conn.close()
         
         locations_list = []
@@ -1034,8 +1034,8 @@ def api_order_create():
         cursor = conn.cursor()
         
         # Получаем ID пользователя в базе
-        cursor.execute('SELECT id FROM users WHERE telegram_id = ?', (user_id,))
-        user = cursor.fetchone()
+        db.execute(cursor, 'SELECT id FROM users WHERE telegram_id = ?', (user_id,))
+        user = db.fetchone(cursor)
         
         if not user:
             conn.close()
@@ -1044,14 +1044,14 @@ def api_order_create():
         user_db_id = user[0]
         
         # Получаем товары из корзины
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT p.id, p.price, ci.quantity
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
             WHERE ci.user_id = ?
         ''', (user_db_id,))
         
-        cart_items = cursor.fetchall()
+        cart_items = db.fetchall(cursor)
         
         if not cart_items:
             conn.close()
@@ -1066,18 +1066,18 @@ def api_order_create():
         
         if delivery_type == 'pickup':
             if pickup_location_id:
-                cursor.execute('SELECT name, address FROM pickup_locations WHERE id = ? AND location_type = "pickup"', 
-                             (pickup_location_id,))
-                location = cursor.fetchone()
+                db.execute(cursor, 'SELECT name, address FROM pickup_locations WHERE id = ? AND location_type = "pickup"', 
+                         (pickup_location_id,))
+                location = db.fetchone(cursor)
                 if location:
                     delivery_info = f"{location[0]} - {location[1]}"
             else:
                 delivery_info = "Самовывоз"
                 
         elif delivery_type == 'delivery':
-            cursor.execute('SELECT delivery_price FROM pickup_locations WHERE city = ? AND location_type = "delivery" LIMIT 1', 
-                         (delivery_city,))
-            delivery_data = cursor.fetchone()
+            db.execute(cursor, 'SELECT delivery_price FROM pickup_locations WHERE city = ? AND location_type = "delivery" LIMIT 1', 
+                     (delivery_city,))
+            delivery_data = db.fetchone(cursor)
             
             if delivery_data:
                 delivery_price = delivery_data[0]
@@ -1094,23 +1094,23 @@ def api_order_create():
         
         try:
             # Создаем заказ
-            cursor.execute('''
+            db.execute(cursor, '''
                 INSERT INTO orders (user_id, total_amount, cashback_earned, customer_name, customer_phone, 
                                   pickup_location, delivery_type, delivery_city, delivery_address, delivery_price, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
             ''', (user_db_id, total_amount, cashback_earned, customer_name, customer_phone, 
                   delivery_info, delivery_type, delivery_city, delivery_address, delivery_price))
             
-            order_id = cursor.lastrowid
+            order_id = db.lastrowid(cursor)
             
             # Начисляем кешбек пользователю
-            cursor.execute('''
+            db.execute(cursor, '''
                 UPDATE users SET balance = balance + ? 
                 WHERE id = ?
             ''', (cashback_earned, user_db_id))
             
             # Очищаем корзину
-            cursor.execute('DELETE FROM cart_items WHERE user_id = ?', (user_db_id,))
+            db.execute(cursor, 'DELETE FROM cart_items WHERE user_id = ?', (user_db_id,))
             
             conn.commit()
             
@@ -1189,8 +1189,8 @@ def api_user_profile():
         cursor = conn.cursor()
         
         # Получаем ID пользователя в базе
-        cursor.execute('SELECT id, balance, first_name, username, photo_url FROM users WHERE telegram_id = ?', (user_id,))
-        user = cursor.fetchone()
+        db.execute(cursor, 'SELECT id, balance, first_name, username, photo_url FROM users WHERE telegram_id = ?', (user_id,))
+        user = db.fetchone(cursor)
         
         if not user:
             conn.close()
@@ -1209,7 +1209,7 @@ def api_user_profile():
         photo_url = user[4] or user_data.get('photo_url', '/static/images/default-avatar.png')
         
         # Получаем заказы пользователя
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT id, total_amount, cashback_earned, pickup_location, delivery_type, 
                    delivery_city, delivery_address, status, created_at
             FROM orders 
@@ -1218,7 +1218,7 @@ def api_user_profile():
             LIMIT 20
         ''', (user_db_id,))
         
-        orders_data = cursor.fetchall()
+        orders_data = db.fetchall(cursor)
         conn.close()
         
         orders_list = []
@@ -1273,7 +1273,7 @@ def api_products_search():
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('''
+        db.execute(cursor, '''
             SELECT id, name, description, price, image_path 
             FROM products 
             WHERE is_active = 1 AND (LOWER(name) LIKE ? OR LOWER(description) LIKE ?)
@@ -1281,7 +1281,7 @@ def api_products_search():
             LIMIT 20
         ''', (f'%{query}%', f'%{query}%'))
         
-        products_data = cursor.fetchall()
+        products_data = db.fetchall(cursor)
         conn.close()
         
         products_list = []
