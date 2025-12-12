@@ -40,7 +40,6 @@ class Database:
             return conn
         else:
             # SQLite для локальной разработки
-            import sqlite3
             return sqlite3.connect(self.db_path)
     
     def execute(self, cursor, query, params=None):
@@ -505,19 +504,3 @@ class Database:
                         INSERT INTO pickup_locations (name, address, city, location_type, delivery_price)
                         VALUES (?, ?, ?, ?, ?)
                     ''', (name, address, city, location_type, delivery_price))
-```
-
-Ключевое исправление: я добавил метод execute в класс Database:
-
-```python
-def execute(self, cursor, query, params=None):
-    """Универсальный метод выполнения SQL запросов"""
-    if params is None:
-        params = []
-    
-    if self.is_postgres:
-        # Для PostgreSQL заменяем ? на %s
-        query = query.replace('?', '%s')
-    
-    cursor.execute(query, params)
-          
