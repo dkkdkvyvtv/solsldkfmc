@@ -1,0 +1,686 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+    <!-- Новый дизайн профиля -->
+    <div class="profile-header">
+        <div class="profile-avatar-container">
+            <img src="" alt="Avatar" class="profile-main-avatar" id="profile-avatar">
+        </div>
+        <div class="profile-name" id="profile-username">Загрузка...</div>
+    </div>
+
+    <div class="profile-sections">
+        <!-- Баланс (без градиентного фона, зеленый текст) -->
+        <div class="profile-section">
+            <h3>💰 Баланс</h3>
+            <div class="finance-cards">
+                <div class="finance-card-plain">
+                    <div class="finance-info">
+                        <div class="finance-label">Ваш баланс</div>
+                        <div class="finance-amount-green" id="main-balance">0 руб.</div>
+                        <div class="finance-note">Доступно для оплаты заказов</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- История заказов -->
+        <div class="profile-section">
+            <h3>📦 История заказов</h3>
+            <div id="orders-list" class="orders-list">
+                <div class="loading">Загрузка заказов...</div>
+            </div>
+        </div>
+
+        <!-- Контакты -->
+        <div class="profile-section">
+            <h3>📞 Контакты</h3>
+            <div class="contact-info">
+                <p>По всем вопросам обращайтесь в нашего бота:</p>
+                <a href="https://t.me/your_bot" class="contact-link">
+                    💬 Написать в поддержку
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Новый дизайн профиля */
+.profile-header {
+    text-align: center;
+    padding: 30px 20px 20px 20px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.profile-avatar-container {
+    margin-bottom: 15px;
+}
+
+.profile-main-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #00ff88;
+    object-fit: cover; /* Исправлено: теперь аватарка не сплюснута */
+}
+
+.profile-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.profile-sections {
+    padding: 0 15px 80px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Добавлен промежуток между секциями */
+}
+
+.profile-section {
+    background: #1a1a1a;
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid #333;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-section h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #00ff88;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.finance-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+/* Карточка баланса без градиента */
+.finance-card-plain {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #333;
+    transition: all 0.3s;
+}
+
+.finance-card-plain:hover {
+    border-color: #00ff88;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.1);
+}
+
+.finance-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.finance-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.finance-amount-green {
+    font-weight: bold;
+    font-size: 28px;
+    color: #00ff88;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.finance-note {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.orders-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.orders-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.orders-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 2px;
+}
+
+.orders-list::-webkit-scrollbar-thumb {
+    background: #00ff88;
+    border-radius: 2px;
+}
+
+.order-item {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 3px solid #00ff88;
+    transition: all 0.3s;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.order-item:hover {
+    transform: translateX(3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border-left-color: #00cc66;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+}
+
+.order-id {
+    font-weight: bold;
+    color: #00ff88;
+    font-size: 14px;
+}
+
+.order-date {
+    color: #888;
+    font-size: 12px;
+}
+
+.order-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    font-size: 13px;
+    color: #ddd;
+}
+
+.order-details > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.order-details > div span:first-child {
+    color: #888;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.order-status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 5px;
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-completed {
+    background: #00ff88;
+    color: #000;
+}
+
+.status-pending {
+    background: #ffaa00;
+    color: #000;
+}
+
+.status-cancelled {
+    background: #ff4444;
+    color: #fff;
+}
+
+.contact-info {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.contact-info p {
+    margin-bottom: 20px;
+    color: #888;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.contact-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #0088cc;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    width: 100%;
+    max-width: 250px;
+    margin: 0 auto;
+}
+
+.contact-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 136, 204, 0.3);
+    background: #0099dd;
+}
+
+.empty-orders {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    background: #2a2a2a;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.empty-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-orders h4 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.empty-orders p {
+    color: #888;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.loading {
+    text-align: center;
+    padding: 30px;
+    color: #888;
+    font-size: 14px;
+}
+
+.error {
+    text-align: center;
+    padding: 30px;
+    color: #ff4444;
+    font-size: 14px;
+    background: #2a2a2a;
+    border-radius: 10px;
+    border: 1px solid #ff4444;
+}
+
+/* Эффект при наведении на карточки */
+.profile-section {
+    transition: all 0.3s;
+}
+
+.profile-section:hover {
+    border-color: #444;
+}
+
+/* Адаптивность */
+@media (max-width: 360px) {
+    .profile-header {
+        padding: 20px 15px 15px 15px;
+        margin-bottom: 15px;
+    }
+    
+    .profile-main-avatar {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .profile-name {
+        font-size: 18px;
+    }
+    
+    .profile-sections {
+        padding: 0 10px 80px 10px;
+        gap: 15px;
+    }
+    
+    .profile-section {
+        padding: 15px;
+    }
+    
+    .finance-amount-green {
+        font-size: 24px;
+    }
+    
+    .order-details {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .order-date {
+        align-self: flex-end;
+    }
+    
+    .contact-link {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 768px) {
+    .profile-header {
+        padding: 40px 20px 30px 20px;
+        margin-bottom: 30px;
+    }
+    
+    .profile-main-avatar {
+        width: 100px;
+        height: 100px;
+        border-width: 4px;
+    }
+    
+    .profile-name {
+        font-size: 24px;
+    }
+    
+    .profile-sections {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px 80px 20px;
+    }
+    
+    .finance-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .finance-card-plain {
+        padding: 25px;
+    }
+    
+    .finance-amount-green {
+        font-size: 32px;
+    }
+    
+    .finance-info {
+        gap: 10px;
+    }
+    
+    .finance-label {
+        font-size: 16px;
+    }
+    
+    .finance-note {
+        font-size: 13px;
+    }
+    
+    .order-details {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .order-item {
+        padding: 20px;
+    }
+    
+    .order-id {
+        font-size: 15px;
+    }
+    
+    .order-date {
+        font-size: 13px;
+    }
+    
+    .order-details {
+        font-size: 14px;
+    }
+    
+    .contact-link {
+        padding: 14px 28px;
+        font-size: 16px;
+        max-width: 280px;
+    }
+}
+
+/* Для очень широких экранов */
+@media (min-width: 1200px) {
+    .profile-sections {
+        max-width: 900px;
+    }
+    
+    .finance-card-plain {
+        padding: 30px;
+    }
+    
+    .finance-amount-green {
+        font-size: 36px;
+    }
+}
+
+/* Анимации для загрузки */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Тень для заголовков секций */
+.profile-section h3 {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Иконки в заголовках */
+.profile-section h3::before {
+    font-size: 20px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    vapeShop.highlightActiveNav();
+    loadProfileData();
+    loadOrders();
+});
+
+function loadProfileData() {
+    const user = window.vapeShop?.user || {
+        first_name: 'Тестовый',
+        photo_url: '/static/images/default-avatar.png'
+    };
+    
+    const balance = window.vapeShop?.balance || 0;
+    
+    // Обновляем профиль
+    const avatar = document.getElementById('profile-avatar');
+    const username = document.getElementById('profile-username');
+    const mainBalance = document.getElementById('main-balance');
+    
+    if (avatar) {
+        avatar.src = user.photo_url || '/static/images/default-avatar.png';
+        // Обработчик ошибки загрузки аватарки
+        avatar.onerror = function() {
+            this.src = '/static/images/default-avatar.png';
+        };
+    }
+    
+    if (username) username.textContent = user.first_name || 'Пользователь';
+    if (mainBalance) mainBalance.textContent = balance + ' руб.';
+}
+
+async function loadOrders() {
+    try {
+        const response = await fetch('/api/user/profile');
+        const data = await response.json();
+        renderOrders(data.orders || []);
+        
+        // Обновляем баланс из данных профиля
+        if (data.balance !== undefined) {
+            const mainBalance = document.getElementById('main-balance');
+            if (mainBalance) {
+                mainBalance.textContent = data.balance + ' руб.';
+            }
+            // Обновляем баланс в глобальном объекте
+            if (window.vapeShop) {
+                window.vapeShop.balance = data.balance;
+            }
+        }
+        
+    } catch (error) {
+        console.error('Ошибка загрузки заказов:', error);
+        const ordersList = document.getElementById('orders-list');
+        if (ordersList) {
+            ordersList.innerHTML = '<div class="error">Ошибка загрузки заказов. Попробуйте обновить страницу.</div>';
+        }
+    }
+}
+
+function renderOrders(orders) {
+    const ordersList = document.getElementById('orders-list');
+    
+    if (!ordersList) return;
+    
+    if (orders.length === 0) {
+        ordersList.innerHTML = `
+            <div class="empty-orders">
+                <div class="empty-icon">📦</div>
+                <h4>Заказов пока нет</h4>
+                <p>Сделайте свой первый заказ!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    ordersList.innerHTML = orders.map(order => {
+        // Определяем текст статуса
+        let statusText = '';
+        let statusClass = '';
+        
+        switch(order.status) {
+            case 'completed':
+                statusText = 'ВЫПОЛНЕН';
+                statusClass = 'status-completed';
+                break;
+            case 'pending':
+                statusText = 'В ОБРАБОТКЕ';
+                statusClass = 'status-pending';
+                break;
+            case 'cancelled':
+                statusText = 'ОТМЕНЕН';
+                statusClass = 'status-cancelled';
+                break;
+            default:
+                statusText = order.status.toUpperCase();
+                statusClass = 'status-pending';
+        }
+        
+        // Форматируем дату
+        const orderDate = new Date(order.created_at);
+        const formattedDate = orderDate.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Определяем информацию о получении
+        let deliveryInfo = '';
+        if (order.delivery_type === 'pickup') {
+            deliveryInfo = order.pickup_location || 'Пункт выдачи не указан';
+        } else {
+            deliveryInfo = order.delivery_city ? `Доставка в ${order.delivery_city}` : 'Доставка';
+            if (order.delivery_address) {
+                deliveryInfo += `, ${order.delivery_address}`;
+            }
+        }
+        
+        return `
+            <div class="order-item">
+                <div class="order-header">
+                    <div class="order-id">Заказ #${order.id}</div>
+                    <div class="order-date">${formattedDate}</div>
+                </div>
+                <div class="order-details">
+                    <div>
+                        <span>Сумма:</span>
+                        <span>${order.total_amount} руб.</span>
+                    </div>
+                    <div>
+                        <span>Кешбек:</span>
+                        <span>+${order.cashback_earned} руб.</span>
+                    </div>
+                    <div>
+                        <span>Получение:</span>
+                        <span style="color: #00ff88; font-weight: 500;">${deliveryInfo}</span>
+                    </div>
+                    <div>
+                        <span>Статус:</span>
+                        <span class="order-status ${statusClass}">${statusText}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Функция для обновления профиля из внешних скриптов
+function updateProfileData(userData, balance) {
+    const avatar = document.getElementById('profile-avatar');
+    const username = document.getElementById('profile-username');
+    const mainBalance = document.getElementById('main-balance');
+    
+    if (userData && avatar) {
+        avatar.src = userData.photo_url || '/static/images/default-avatar.png';
+    }
+    
+    if (userData && username) {
+        username.textContent = userData.first_name || 'Пользователь';
+    }
+    
+    if (balance !== undefined && mainBalance) {
+        mainBalance.textContent = balance + ' руб.';
+    }
+}
+
+// Экспортируем функцию для обновления профиля
+window.updateProfileData = updateProfileData;
+
+// Периодическое обновление баланса (каждые 30 секунд)
+setInterval(() => {
+    loadOrders();
+}, 30000);
+</script>
+{% endblock %}
