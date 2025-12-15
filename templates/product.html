@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+    <div class="product-detail">
+        <div class="detail-image">
+            <img src="{{ product.image_path }}" alt="{{ product.name }}" onerror="this.src='/static/images/default-product.png'">
+        </div>
+        
+        <div class="detail-info">
+            <h1>{{ product.name }}</h1>
+            <div class="detail-price">{{ product.price }} руб.</div>
+            
+            <p class="product-description">{{ product.description }}</p>
+            
+            {% if product.specifications %}
+            <div class="specs-list">
+                <h3>Характеристики:</h3>
+                {% for spec in product.specifications %}
+                <div class="spec-item">{{ spec }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <button class="add-to-cart-btn" data-product-id="{{ product.id }}" onclick="addToCart({{ product.id }})">
+                Добавить в корзину
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    vapeShop.highlightActiveNav(); // Подсветка активной вкладки
+});
+</script>
+{% endblock %}
