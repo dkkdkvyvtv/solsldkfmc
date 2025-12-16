@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VapeCloud - Лучший магазин вейпов{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div id="app">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <nav class="bottom-nav">
+        <a href="{{ url_for('index') }}" class="nav-item">
+            <span class="nav-icon">
+                <img src="{{ url_for('static', filename='images/home.jpg') }}" alt="Главная">
+            </span>
+            <span class="nav-text">Главная</span>
+        </a>
+        <a href="{{ url_for('catalog') }}" class="nav-item">
+            <span class="nav-icon">
+                <img src="{{ url_for('static', filename='images/katalog.jpg') }}" alt="Каталог">
+            </span>
+            <span class="nav-text">Каталог</span>
+        </a>
+        <a href="#" class="nav-item" id="search-btn">
+            <span class="nav-icon">
+                <img src="{{ url_for('static', filename='images/search.jpg') }}" alt="Поиск">
+            </span>
+            <span class="nav-text">Поиск</span>
+        </a>
+        <a href="{{ url_for('cart') }}" class="nav-item">
+            <span class="nav-icon">
+                <img src="{{ url_for('static', filename='images/korz.jpg') }}" alt="Корзина">
+            </span>
+            <span class="nav-text">Корзина</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="nav-item">
+            <span class="nav-icon">
+                <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="Профиль">
+            </span>
+            <span class="nav-text">Профиль</span>
+        </a>
+    </nav>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
