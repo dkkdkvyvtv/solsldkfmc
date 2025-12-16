@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+    <!-- ФИКСИРОВАННЫЙ ПРОФИЛЬ В ВЕРХНЕМ ЛЕВОМ УГЛУ -->
+    <div class="profile-header-fixed" id="profile-header-fixed">
+        <div class="mini-profile">
+            <div class="mini-profile-avatar" onclick="window.location.href='/profile'">
+                <img src="" alt="Avatar" id="user-avatar">
+            </div>
+            <div class="mini-profile-info">
+                <div class="mini-username" id="username">Загрузка...</div>
+                <div class="mini-balance" id="balance">0 руб.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Главный баннер -->
+    <section class="hero">
+        <h1>VapeCloud</h1>
+        <p>Лучший выбор вейпов и электронных сигарет</p>
+    </section>
+
+    <!-- Популярные товары по категориям -->
+    <div id="featured-categories">
+        <div class="loading">Загрузка популярных товаров...</div>
+    </div>
+
+    <!-- Преимущества -->
+    <section class="benefits">
+        <div class="benefit-item">
+            <span class="benefit-icon">🚚</span>
+            <h3>Самовывоз</h3>
+            <p>Заберите заказ в удобном месте</p>
+        </div>
+        <div class="benefit-item">
+            <span class="benefit-icon">💰</span>
+            <h3>Кешбек 3%</h3>
+            <p>Возвращаем часть суммы за каждый заказ</p>
+        </div>
+        <div class="benefit-item">
+            <span class="benefit-icon">⭐</span>
+            <h3>Качество</h3>
+            <p>Только оригинальная продукция</p>
+        </div>
+    </section>
+</div>
+
+<style>
+/* ФИКСИРОВАННЫЙ ПРОФИЛЬ В ВЕРХНЕМ ЛЕВОМ УГЛУ */
+.profile-header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    padding: 10px 15px;
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(51, 51, 51, 0.5);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.mini-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(42, 42, 42, 0.9);
+    border-radius: 15px;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    max-width: 200px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.mini-profile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.15);
+    border-color: rgba(0, 255, 136, 0.6);
+}
+
+.mini-profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #00ff88;
+    flex-shrink: 0;
+    background: #1a1a1a;
+}
+
+.mini-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mini-profile-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.mini-username {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+    line-height: 1.2;
+}
+
+.mini-balance {
+    font-size: 12px;
+    font-weight: bold;
+    color: #00ff88;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Отступ для контента под фиксированным профилем */
+.hero {
+    margin-top: 70px;
+}
+
+/* Герой секция */
+.hero {
+    text-align: center;
+    padding: 40px 20px 40px 20px;
+    position: relative;
+}
+
+.hero h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #00ff88, #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+.hero p {
+    color: #888;
+    font-size: 1.1em;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.featured-category {
+    margin-bottom: 30px;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px 10px 20px;
+}
+
+.category-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.category-icon {
+    font-size: 20px;
+}
+
+.view-all {
+    color: #00ff88;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.horizontal-products-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.horizontal-products-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.horizontal-product-card {
+    flex: 0 0 auto;
+    width: 200px;
+    background: #1a1a1a;
+    border-radius: 15px;
+    padding: 15px;
+    border: 1px solid #333;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+.horizontal-product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,255,136,0.1);
+}
+
+.horizontal-product-image {
+    width: 100%;
+    height: 120px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    background: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.horizontal-product-image img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: scale-down;
+}
+
+.horizontal-product-info {
+    flex: 1;
+}
+
+.horizontal-product-name {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #fff;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.horizontal-product-description {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.horizontal-product-price {
+    color: #00ff88;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.no-products {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    font-size: 16px;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+/* Преимущества */
+.benefits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 20px;
+    background: #1a1a1a;
+    margin: 20px;
+    border-radius: 15px;
+    border: 1px solid #333;
+}
+
+.benefit-item {
+    text-align: center;
+    background: #2a2a2a;
+    padding: 15px 10px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    transition: all 0.3s;
+}
+
+.benefit-item:hover {
+    transform: translateY(-3px);
+    border-color: #00ff88;
+}
+
+.benefit-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.benefit-item h3 {
+    font-size: 14px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.benefit-item p {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.3;
+}
+
+/* Адаптивность */
+@media (max-width: 360px) {
+    .profile-header-fixed {
+        padding: 8px 10px;
+    }
+    
+    .mini-profile {
+        gap: 10px;
+        padding: 6px 10px;
+        max-width: 170px;
+    }
+    
+    .mini-profile-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+    }
+    
+    .mini-username {
+        font-size: 12px;
+    }
+    
+    .mini-balance {
+        font-size: 11px;
+    }
+    
+    .hero {
+        margin-top: 65px;
+        padding: 30px 15px 30px 15px;
+    }
+    
+    .hero h1 {
+        font-size: 2em;
+    }
+    
+    .benefits {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 15px;
+        margin: 15px;
+    }
+    
+    .horizontal-product-card {
+        width: 180px;
+    }
+}
+
+@media (min-width: 768px) {
+    .profile-header-fixed {
+        padding: 15px 20px;
+    }
+    
+    .mini-profile {
+        gap: 15px;
+        padding: 10px 15px;
+        max-width: 230px;
+    }
+    
+    .mini-profile-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+    }
+    
+    .mini-username {
+        font-size: 14px;
+    }
+    
+    .mini-balance {
+        font-size: 13px;
+    }
+    
+    .hero {
+        margin-top: 80px;
+        padding: 50px 20px 50px 20px;
+    }
+    
+    .benefits {
+        max-width: 800px;
+        margin: 30px auto;
+    }
+    
+    .horizontal-product-card {
+        width: 220px;
+    }
+    
+    .horizontal-product-image {
+        height: 140px;
+    }
+}
+
+/* Для очень широких экранов */
+@media (min-width: 1200px) {
+    .profile-header-fixed {
+        padding: 20px 30px;
+    }
+    
+    .mini-profile {
+        max-width: 250px;
+    }
+    
+    .hero {
+        margin-top: 90px;
+    }
+}
+
+/* Анимация появления профиля */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-header-fixed {
+    animation: slideDown 0.3s ease-out;
+}
+
+/* Эффект при прокрутке */
+.profile-header-fixed.scrolled {
+    background: rgba(26, 26, 26, 0.98);
+    border-bottom: 1px solid rgba(51, 51, 51, 0.8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadFeaturedCategories();
+    
+    // Обновляем профиль
+    updateMiniProfile();
+    
+    // Добавляем обработчик скролла для фиксированного профиля
+    window.addEventListener('scroll', function() {
+        const profileHeader = document.getElementById('profile-header-fixed');
+        if (profileHeader) {
+            if (window.scrollY > 10) {
+                profileHeader.classList.add('scrolled');
+            } else {
+                profileHeader.classList.remove('scrolled');
+            }
+        }
+    });
+});
+
+// Функция обновления мини-профиля
+function updateMiniProfile() {
+    const user = window.vapeShop?.user;
+    const balance = window.vapeShop?.balance || 0;
+    
+    if (user) {
+        const avatar = document.getElementById('user-avatar');
+        const username = document.getElementById('username');
+        const balanceEl = document.getElementById('balance');
+        
+        if (avatar) {
+            avatar.src = user.photo_url || '/static/images/default-avatar.png';
+            avatar.onerror = function() {
+                this.src = '/static/images/default-avatar.png';
+            };
+        }
+        if (username) username.textContent = user.first_name || 'Пользователь';
+        if (balanceEl) balanceEl.textContent = balance + ' руб.';
+    } else {
+        // Если данные еще не загружены, попробуем через секунду
+        setTimeout(updateMiniProfile, 1000);
+    }
+}
+
+async function loadFeaturedCategories() {
+    try {
+        const response = await fetch('/api/products/featured');
+        const categories = await response.json();
+        renderFeaturedCategories(categories);
+    } catch (error) {
+        console.error('Ошибка загрузки популярных товаров:', error);
+        document.getElementById('featured-categories').innerHTML = 
+            '<div class="error">Ошибка загрузки товаров</div>';
+    }
+}
+
+function renderFeaturedCategories(categories) {
+    const container = document.getElementById('featured-categories');
+    
+    if (!categories || Object.keys(categories).length === 0) {
+        container.innerHTML = `
+            <div class="no-products">
+                <div style="font-size: 40px; margin-bottom: 15px;">🎯</div>
+                <h3 style="margin-bottom: 10px; color: #fff; font-size: 18px;">Популярные товары скоро появятся</h3>
+                <p>Администратор добавляет товары в магазин</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    for (const [categoryId, categoryData] of Object.entries(categories)) {
+        const products = categoryData.products || [];
+        
+        if (products.length === 0) {
+            continue;
+        }
+        
+        html += `
+            <div class="featured-category">
+                <div class="category-header">
+                    <div class="category-title">
+                        <span class="category-icon">${categoryData.icon || '🎯'}</span>
+                        <span>${categoryData.display_name || 'Популярное'}</span>
+                    </div>
+                    <a href="/catalog?category=${categoryId}" class="view-all">
+                        Все товары →
+                    </a>
+                </div>
+                <div class="horizontal-products-scroll">
+                    ${products.map(product => `
+                        <div class="horizontal-product-card" onclick="window.location.href='/product/${product.id}'">
+                            <div class="horizontal-product-image">
+                                <img src="${product.image_path}" alt="${product.name}" 
+                                     onerror="this.src='/static/images/default-product.png'">
+                            </div>
+                            <div class="horizontal-product-info">
+                                <h3 class="horizontal-product-name">${product.name}</h3>
+                                <p class="horizontal-product-description">${product.description}</p>
+                                <div class="horizontal-product-price">${product.price} руб.</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (html === '') {
+        container.innerHTML = `
+            <div class="no-products">
+                <div style="font-size: 40px; margin-bottom: 15px;">📦</div>
+                <h3 style="margin-bottom: 10px; color: #fff; font-size: 18px;">Товары скоро появятся</h3>
+                <p>Администратор добавляет товары в магазин</p>
+            </div>
+        `;
+    } else {
+        container.innerHTML = html;
+    }
+}
+</script>
+{% endblock %}
