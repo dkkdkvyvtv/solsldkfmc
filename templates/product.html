@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+    <!-- ФИКСИРОВАННЫЙ ПРОФИЛЬ В ВЕРХНЕМ ЛЕВОМ УГЛУ -->
+    <div class="profile-header-fixed" id="profile-header-fixed">
+        <div class="mini-profile">
+            <div class="mini-profile-avatar" onclick="window.location.href='/profile'">
+                <img src="" alt="Avatar" id="user-avatar">
+            </div>
+            <div class="mini-profile-info">
+                <div class="mini-username" id="username">Загрузка...</div>
+                <div class="mini-balance" id="balance">0 руб.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="product-detail" style="margin-top: 70px;">
+        <div class="detail-image">
+            <img src="{{ product.image_path }}" alt="{{ product.name }}" onerror="this.src='/static/images/default-product.png'">
+        </div>
+        
+        <div class="detail-info">
+            <h1>{{ product.name }}</h1>
+            <div class="detail-price">{{ product.price }} руб.</div>
+            
+            <p class="product-description">{{ product.description }}</p>
+            
+            {% if product.specifications %}
+            <div class="specs-list">
+                <h3>Характеристики:</h3>
+                {% for spec in product.specifications %}
+                <div class="spec-item">{{ spec }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <button class="add-to-cart-btn" data-product-id="{{ product.id }}" onclick="addToCart({{ product.id }})">
+                Добавить в корзину
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Стили для фиксированного профиля */
+.profile-header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    padding: 10px 15px;
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(51, 51, 51, 0.5);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.mini-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(42, 42, 42, 0.9);
+    border-radius: 15px;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    max-width: 200px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.mini-profile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.15);
+    border-color: rgba(0, 255, 136, 0.6);
+}
+
+.mini-profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #00ff88;
+    flex-shrink: 0;
+    background: #1a1a1a;
+}
+
+.mini-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mini-profile-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.mini-username {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+    line-height: 1.2;
+}
+
+.mini-balance {
+    font-size: 12px;
+    font-weight: bold;
+    color: #00ff88;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.product-detail {
+    padding: 0 15px 80px 15px;
+}
+
+.detail-image {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 20px auto;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+.detail-image img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: scale-down;
+}
+
+.detail-info {
+    background: #1a1a1a;
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid #333;
+}
+
+.detail-info h1 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.detail-price {
+    color: #00ff88;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.product-description {
+    color: #ddd;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.specs-list {
+    margin-bottom: 25px;
+}
+
+.specs-list h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.spec-item {
+    background: #2a2a2a;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #ddd;
+    border: 1px solid #333;
+}
+
+.add-to-cart-btn {
+    background: linear-gradient(45deg, #00ff88, #00cc66);
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: bold;
+    width: 100%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.add-to-cart-btn:hover {
+    box-shadow: 0 5px 15px rgba(0,255,136,0.3);
+}
+
+@media (max-width: 360px) {
+    .profile-header-fixed {
+        padding: 8px 10px;
+    }
+    
+    .mini-profile {
+        gap: 10px;
+        padding: 6px 10px;
+        max-width: 170px;
+    }
+    
+    .mini-profile-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+    }
+    
+    .mini-username {
+        font-size: 12px;
+    }
+    
+    .mini-balance {
+        font-size: 11px;
+    }
+    
+    .product-detail {
+        margin-top: 65px;
+        padding: 0 10px 80px 10px;
+    }
+    
+    .detail-image {
+        height: 250px;
+    }
+    
+    .detail-info {
+        padding: 15px;
+    }
+    
+    .detail-info h1 {
+        font-size: 18px;
+    }
+    
+    .detail-price {
+        font-size: 20px;
+    }
+}
+
+@media (min-width: 768px) {
+    .profile-header-fixed {
+        padding: 15px 20px;
+    }
+    
+    .mini-profile {
+        gap: 15px;
+        padding: 10px 15px;
+        max-width: 230px;
+    }
+    
+    .mini-profile-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+    }
+    
+    .mini-username {
+        font-size: 14px;
+    }
+    
+    .mini-balance {
+        font-size: 13px;
+    }
+    
+    .product-detail {
+        margin-top: 80px;
+        padding: 0 20px 80px 20px;
+    }
+    
+    .detail-image {
+        height: 350px;
+    }
+    
+    .detail-info h1 {
+        font-size: 24px;
+    }
+    
+    .detail-price {
+        font-size: 28px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    vapeShop.highlightActiveNav(); // Подсветка активной вкладки
+    
+    // Обновляем мини-профиль
+    updateMiniProfile();
+    
+    // Добавляем обработчик скролла для фиксированного профиля
+    window.addEventListener('scroll', function() {
+        const profileHeader = document.getElementById('profile-header-fixed');
+        if (profileHeader) {
+            if (window.scrollY > 10) {
+                profileHeader.classList.add('scrolled');
+            } else {
+                profileHeader.classList.remove('scrolled');
+            }
+        }
+    });
+});
+
+// Функция обновления мини-профиля
+function updateMiniProfile() {
+    const user = window.vapeShop?.user;
+    const balance = window.vapeShop?.balance || 0;
+    
+    if (user) {
+        const avatar = document.getElementById('user-avatar');
+        const username = document.getElementById('username');
+        const balanceEl = document.getElementById('balance');
+        
+        if (avatar) {
+            avatar.src = user.photo_url || '/static/images/default-avatar.png';
+            avatar.onerror = function() {
+                this.src = '/static/images/default-avatar.png';
+            };
+        }
+        if (username) username.textContent = user.first_name || 'Пользователь';
+        if (balanceEl) balanceEl.textContent = balance + ' руб.';
+    } else {
+        // Если данные еще не загружены, попробуем через секунду
+        setTimeout(updateMiniProfile, 1000);
+    }
+}
+</script>
+{% endblock %}
