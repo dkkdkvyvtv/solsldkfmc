@@ -1,0 +1,1099 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+    <!-- Новый дизайн профиля -->
+    <div class="profile-header">
+        <div class="profile-avatar-container">
+            <img src="" alt="Avatar" class="profile-main-avatar" id="profile-avatar">
+        </div>
+        <div class="profile-name-container">
+            <div class="profile-name" id="profile-username">Загрузка...</div>
+            <div class="profile-verified-status" id="profile-verified-status">
+                <span class="verified-badge" id="verified-badge">Не верифицирован</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-sections">
+        <!-- Баланс -->
+        <div class="profile-section">
+            <h3>💰 Баланс</h3>
+            <div class="finance-cards">
+                <div class="finance-card-plain">
+                    <div class="finance-info">
+                        <div class="finance-label">Ваш баланс</div>
+                        <div class="finance-amount-green" id="main-balance">0 руб.</div>
+                        <div class="finance-note">Доступно для оплаты заказов</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Реферальная система -->
+        <div class="profile-section">
+            <h3>👥 Реферальная система</h3>
+            <div class="referral-section">
+                <div class="referral-card">
+                    <div class="referral-info">
+                        <div class="referral-label">Ваша реферальная ссылка</div>
+                        <div class="referral-code-container">
+                            <div class="referral-code" id="referral-code-text">Загрузка...</div>
+                            <button class="copy-btn" onclick="copyReferralCode()">
+                                <span class="copy-icon">📋</span>
+                                <span class="copy-text">Копировать</span>
+                            </button>
+                        </div>
+                        <div class="referral-description">
+                            <p>🔗 Приглашайте друзей и получайте <strong>100 руб.</strong> за каждого приведенного пользователя!</p>
+                            <p>🎁 Друг тоже получает бонус при регистрации</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="referral-stats">
+                    <div class="referral-stat">
+                        <div class="stat-label">Приглашено</div>
+                        <div class="stat-value" id="referral-count">0</div>
+                    </div>
+                    <div class="referral-stat">
+                        <div class="stat-label">Заработано</div>
+                        <div class="stat-value" id="referral-earned">0 руб.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Система лояльности -->
+        <div class="profile-section">
+            <h3>⭐ Система лояльности</h3>
+            <div class="loyalty-section">
+                <div class="loyalty-current">
+                    <div class="loyalty-level">
+                        <div class="level-label">Ваш уровень</div>
+                        <div class="level-name" id="loyalty-level">Новичок</div>
+                    </div>
+                    <div class="loyalty-percent">
+                        <div class="percent-label">Текущий кешбек</div>
+                        <div class="percent-value" id="loyalty-percent">0.5%</div>
+                    </div>
+                </div>
+                
+                <div class="loyalty-progress">
+                    <div class="progress-info">
+                        <div class="progress-label">Потрачено: <span id="total-spent">0 руб.</span></div>
+                        <div class="progress-next">До следующего уровня: <span id="next-level">10,000 руб.</span></div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="loyalty-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <div class="step">0.5%</div>
+                        <div class="step">1%</div>
+                        <div class="step">2%</div>
+                        <div class="step">3%</div>
+                        <div class="step">5%</div>
+                    </div>
+                </div>
+                
+                <div class="loyalty-info">
+                    <div class="info-item">
+                        <span class="info-icon">💰</span>
+                        <div class="info-text">Накопленная сумма: <strong id="loyalty-total-spent">0 руб.</strong></div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">📊</span>
+                        <div class="info-text">Всего заказов: <strong id="total-orders">0</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- История заказов -->
+        <div class="profile-section">
+            <h3>📦 История заказов</h3>
+            <div id="orders-list" class="orders-list">
+                <div class="loading">Загрузка заказов...</div>
+            </div>
+        </div>
+
+        <!-- Контакты -->
+        <div class="profile-section">
+            <h3>📞 Контакты</h3>
+            <div class="contact-info">
+                <p>По всем вопросам, включая верификацию аккаунта, обращайтесь к администратору:</p>
+                <a href="https://t.me/Danil_623" class="contact-link" target="_blank">
+                    💬 Написать администратору @Danil_623
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Новый дизайн профиля */
+.profile-header {
+    text-align: center;
+    padding: 30px 20px 20px 20px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.profile-avatar-container {
+    margin-bottom: 15px;
+}
+
+.profile-main-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #00ff88;
+    object-fit: cover;
+}
+
+.profile-name-container {
+    margin-bottom: 5px;
+}
+
+.profile-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.profile-verified-status {
+    margin-top: 5px;
+}
+
+.verified-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.verified-true {
+    background: #00ff88;
+    color: #000;
+}
+
+.verified-false {
+    background: #ff4444;
+    color: #fff;
+}
+
+.profile-sections {
+    padding: 0 15px 80px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-section {
+    background: #1a1a1a;
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid #333;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-section h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #00ff88;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Реферальная система */
+.referral-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.referral-card {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+}
+
+.referral-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 10px;
+}
+
+.referral-code-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.referral-code {
+    flex: 1;
+    min-width: 200px;
+    background: #1a1a1a;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #00ff88;
+    border: 1px solid #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0088cc;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.copy-btn:hover {
+    background: #0099dd;
+    transform: translateY(-2px);
+}
+
+.copy-icon {
+    font-size: 16px;
+}
+
+.copy-text {
+    font-size: 14px;
+}
+
+.referral-description {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.referral-description p {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+.referral-description p:last-child {
+    margin-bottom: 0;
+}
+
+.referral-description strong {
+    color: #00ff88;
+}
+
+.referral-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.referral-stat {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #00ff88;
+}
+
+/* Система лояльности */
+.loyalty-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.loyalty-current {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.loyalty-level, .loyalty-percent {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.level-label, .percent-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.level-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: #00ff88;
+    text-shadow: 0 2px 4px rgba(0, 255, 136, 0.3);
+}
+
+.percent-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #00ff88;
+}
+
+.loyalty-progress {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #ccc;
+}
+
+.progress-info span {
+    color: #fff;
+    font-weight: bold;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #333;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #00cc66);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+}
+
+.step {
+    position: relative;
+    text-align: center;
+}
+
+.step:before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #555;
+    border-radius: 50%;
+}
+
+.loyalty-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.info-icon {
+    font-size: 20px;
+}
+
+.info-text {
+    font-size: 13px;
+    color: #ccc;
+}
+
+.info-text strong {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Баланс */
+.finance-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.finance-card-plain {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #333;
+    transition: all 0.3s;
+}
+
+.finance-card-plain:hover {
+    border-color: #00ff88;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.1);
+}
+
+.finance-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.finance-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.finance-amount-green {
+    font-weight: bold;
+    font-size: 28px;
+    color: #00ff88;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.finance-note {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* История заказов */
+.orders-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.orders-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.orders-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 2px;
+}
+
+.orders-list::-webkit-scrollbar-thumb {
+    background: #00ff88;
+    border-radius: 2px;
+}
+
+.order-item {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 3px solid #00ff88;
+    transition: all 0.3s;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.order-item:hover {
+    transform: translateX(3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border-left-color: #00cc66;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+}
+
+.order-id {
+    font-weight: bold;
+    color: #00ff88;
+    font-size: 14px;
+}
+
+.order-date {
+    color: #888;
+    font-size: 12px;
+}
+
+.order-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    font-size: 13px;
+    color: #ddd;
+}
+
+.order-details > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.order-details > div span:first-child {
+    color: #888;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.order-status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 5px;
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-completed {
+    background: #00ff88;
+    color: #000;
+}
+
+.status-pending {
+    background: #ffaa00;
+    color: #000;
+}
+
+.status-cancelled {
+    background: #ff4444;
+    color: #fff;
+}
+
+/* Контакты */
+.contact-info {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.contact-info p {
+    margin-bottom: 20px;
+    color: #888;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.contact-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #0088cc;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.contact-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 136, 204, 0.3);
+    background: #0099dd;
+}
+
+/* Состояния загрузки и пустых данных */
+.empty-orders {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    background: #2a2a2a;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.empty-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-orders h4 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.empty-orders p {
+    color: #888;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.loading {
+    text-align: center;
+    padding: 30px;
+    color: #888;
+    font-size: 14px;
+}
+
+.error {
+    text-align: center;
+    padding: 30px;
+    color: #ff4444;
+    font-size: 14px;
+    background: #2a2a2a;
+    border-radius: 10px;
+    border: 1px solid #ff4444;
+}
+
+/* Адаптивность */
+@media (max-width: 360px) {
+    .profile-header {
+        padding: 20px 15px 15px 15px;
+        margin-bottom: 15px;
+    }
+    
+    .profile-main-avatar {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .profile-name {
+        font-size: 18px;
+    }
+    
+    .profile-sections {
+        padding: 0 10px 80px 10px;
+        gap: 15px;
+    }
+    
+    .profile-section {
+        padding: 15px;
+    }
+    
+    .referral-code {
+        min-width: 150px;
+        font-size: 12px;
+    }
+    
+    .loyalty-current {
+        grid-template-columns: 1fr;
+    }
+    
+    .loyalty-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-details {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .order-date {
+        align-self: flex-end;
+    }
+    
+    .contact-link {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 768px) {
+    .profile-header {
+        padding: 40px 20px 30px 20px;
+        margin-bottom: 30px;
+    }
+    
+    .profile-main-avatar {
+        width: 100px;
+        height: 100px;
+        border-width: 4px;
+    }
+    
+    .profile-name {
+        font-size: 24px;
+    }
+    
+    .profile-sections {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px 80px 20px;
+    }
+    
+    .referral-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .order-details {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .order-item {
+        padding: 20px;
+    }
+    
+    .contact-link {
+        padding: 14px 28px;
+        font-size: 16px;
+        max-width: 350px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .profile-sections {
+        max-width: 900px;
+    }
+}
+
+/* Анимации для загрузки */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    vapeShop.highlightActiveNav();
+    loadProfileData();
+    loadOrders();
+});
+
+function loadProfileData() {
+    const user = window.vapeShop?.user || {
+        first_name: 'Тестовый',
+        photo_url: '/static/images/default-avatar.png'
+    };
+    
+    const balance = window.vapeShop?.balance || 0;
+    
+    // Обновляем профиль
+    const avatar = document.getElementById('profile-avatar');
+    const username = document.getElementById('profile-username');
+    const mainBalance = document.getElementById('main-balance');
+    
+    if (avatar) {
+        avatar.src = user.photo_url || '/static/images/default-avatar.png';
+        avatar.onerror = function() {
+            this.src = '/static/images/default-avatar.png';
+        };
+    }
+    
+    if (username) username.textContent = user.first_name || 'Пользователь';
+    if (mainBalance) mainBalance.textContent = balance + ' руб.';
+}
+
+async function loadOrders() {
+    try {
+        const response = await fetch('/api/user/profile');
+        const data = await response.json();
+        renderOrders(data.orders || []);
+        
+        // Обновляем все данные профиля
+        updateProfileInfo(data);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки заказов:', error);
+        const ordersList = document.getElementById('orders-list');
+        if (ordersList) {
+            ordersList.innerHTML = '<div class="error">Ошибка загрузки заказов. Попробуйте обновить страницу.</div>';
+        }
+    }
+}
+
+function updateProfileInfo(data) {
+    // Обновляем баланс
+    if (data.balance !== undefined) {
+        const mainBalance = document.getElementById('main-balance');
+        if (mainBalance) {
+            mainBalance.textContent = data.balance + ' руб.';
+        }
+        if (window.vapeShop) {
+            window.vapeShop.balance = data.balance;
+        }
+    }
+    
+    // Обновляем статус верификации
+    const verifiedBadge = document.getElementById('verified-badge');
+    if (verifiedBadge) {
+        if (data.is_verified) {
+            verifiedBadge.textContent = '✓ Верифицирован';
+            verifiedBadge.className = 'verified-badge verified-true';
+        } else {
+            verifiedBadge.textContent = 'Не верифицирован';
+            verifiedBadge.className = 'verified-badge verified-false';
+        }
+    }
+    
+    // Обновляем реферальную информацию
+    const referralCode = document.getElementById('referral-code-text');
+    if (referralCode && data.referral_code) {
+        referralCode.textContent = data.referral_code;
+    }
+    
+    const referralCount = document.getElementById('referral-count');
+    if (referralCount && data.total_invited !== undefined) {
+        referralCount.textContent = data.total_invited;
+    }
+    
+    // Обновляем систему лояльности
+    const loyaltyLevel = document.getElementById('loyalty-level');
+    if (loyaltyLevel && data.loyalty_level) {
+        loyaltyLevel.textContent = data.loyalty_level;
+    }
+    
+    const loyaltyPercent = document.getElementById('loyalty-percent');
+    if (loyaltyPercent && data.loyalty_rate !== undefined) {
+        loyaltyPercent.textContent = data.loyalty_rate.toFixed(1) + '%';
+    }
+    
+    const totalSpent = document.getElementById('total-spent');
+    if (totalSpent && data.total_spent !== undefined) {
+        totalSpent.innerHTML = `<span id="total-spent-value">${data.total_spent.toFixed(2)}</span> руб.`;
+    }
+    
+    const nextLevel = document.getElementById('next-level');
+    if (nextLevel && data.next_level_threshold !== undefined) {
+        nextLevel.textContent = data.next_level_threshold.toLocaleString() + ' руб.';
+    }
+    
+    const loyaltyProgressBar = document.getElementById('loyalty-progress-bar');
+    if (loyaltyProgressBar && data.progress_percentage !== undefined) {
+        loyaltyProgressBar.style.width = data.progress_percentage + '%';
+    }
+    
+    const loyaltyTotalSpent = document.getElementById('loyalty-total-spent');
+    if (loyaltyTotalSpent && data.total_spent !== undefined) {
+        loyaltyTotalSpent.textContent = data.total_spent.toFixed(2) + ' руб.';
+    }
+    
+    const totalOrders = document.getElementById('total-orders');
+    if (totalOrders && data.total_orders !== undefined) {
+        totalOrders.textContent = data.total_orders;
+    }
+    
+    // Обновляем заработанное по рефералам (примерная логика)
+    const referralEarned = document.getElementById('referral-earned');
+    if (referralEarned && data.total_invited !== undefined) {
+        const earned = data.total_invited * 100;
+        referralEarned.textContent = earned + ' руб.';
+    }
+}
+
+function renderOrders(orders) {
+    const ordersList = document.getElementById('orders-list');
+    
+    if (!ordersList) return;
+    
+    if (orders.length === 0) {
+        ordersList.innerHTML = `
+            <div class="empty-orders">
+                <div class="empty-icon">📦</div>
+                <h4>Заказов пока нет</h4>
+                <p>Сделайте свой первый заказ!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    ordersList.innerHTML = orders.map(order => {
+        // Определяем текст статуса
+        let statusText = '';
+        let statusClass = '';
+        
+        switch(order.status) {
+            case 'completed':
+                statusText = 'ВЫПОЛНЕН';
+                statusClass = 'status-completed';
+                break;
+            case 'pending':
+                statusText = 'В ОБРАБОТКЕ';
+                statusClass = 'status-pending';
+                break;
+            case 'cancelled':
+                statusText = 'ОТМЕНЕН';
+                statusClass = 'status-cancelled';
+                break;
+            default:
+                statusText = order.status.toUpperCase();
+                statusClass = 'status-pending';
+        }
+        
+        // Форматируем дату
+        const orderDate = new Date(order.created_at);
+        const formattedDate = orderDate.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Определяем информацию о получении
+        let deliveryInfo = '';
+        if (order.delivery_type === 'pickup') {
+            deliveryInfo = order.pickup_location || 'Пункт выдачи не указан';
+        } else {
+            deliveryInfo = order.delivery_city ? `Доставка в ${order.delivery_city}` : 'Доставка';
+            if (order.delivery_address) {
+                deliveryInfo += `, ${order.delivery_address}`;
+            }
+        }
+        
+        return `
+            <div class="order-item">
+                <div class="order-header">
+                    <div class="order-id">Заказ #${order.id}</div>
+                    <div class="order-date">${formattedDate}</div>
+                </div>
+                <div class="order-details">
+                    <div>
+                        <span>Сумма:</span>
+                        <span>${order.total_amount} руб.</span>
+                    </div>
+                    <div>
+                        <span>Кешбек:</span>
+                        <span>+${order.cashback_earned} руб.</span>
+                    </div>
+                    <div>
+                        <span>Получение:</span>
+                        <span style="color: #00ff88; font-weight: 500;">${deliveryInfo}</span>
+                    </div>
+                    <div>
+                        <span>Статус:</span>
+                        <span class="order-status ${statusClass}">${statusText}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function copyReferralCode() {
+    const referralCodeElement = document.getElementById('referral-code-text');
+    const referralCode = referralCodeElement.textContent;
+    
+    if (!referralCode || referralCode === 'Загрузка...') {
+        alert('Реферальный код еще не загружен');
+        return;
+    }
+    
+    // Создаем полную реферальную ссылку
+    const referralLink = window.location.origin + '?ref=' + referralCode;
+    
+    navigator.clipboard.writeText(referralLink).then(() => {
+        // Меняем текст кнопки на время
+        const copyBtn = document.querySelector('.copy-btn');
+        const originalText = copyBtn.innerHTML;
+        
+        copyBtn.innerHTML = '<span class="copy-icon">✓</span><span class="copy-text">Скопировано!</span>';
+        copyBtn.style.background = '#00ff88';
+        copyBtn.style.color = '#000';
+        
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Ошибка копирования: ', err);
+        alert('Не удалось скопировать ссылку. Попробуйте еще раз.');
+    });
+}
+
+// Функция для обновления профиля из внешних скриптов
+function updateProfileData(userData, balance) {
+    const avatar = document.getElementById('profile-avatar');
+    const username = document.getElementById('profile-username');
+    const mainBalance = document.getElementById('main-balance');
+    
+    if (userData && avatar) {
+        avatar.src = userData.photo_url || '/static/images/default-avatar.png';
+    }
+    
+    if (userData && username) {
+        username.textContent = userData.first_name || 'Пользователь';
+    }
+    
+    if (balance !== undefined && mainBalance) {
+        mainBalance.textContent = balance + ' руб.';
+    }
+}
+
+// Экспортируем функцию для обновления профиля
+window.updateProfileData = updateProfileData;
+
+// Периодическое обновление баланса (каждые 30 секунд)
+setInterval(() => {
+    loadOrders();
+}, 30000);
+</script>
+{% endblock %}
