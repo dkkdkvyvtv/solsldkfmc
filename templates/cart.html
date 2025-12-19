@@ -1,0 +1,1485 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+    <header class="page-header">
+        <h1>Корзина</h1>
+    </header>
+
+    <div id="cart-items" class="cart-items">
+        <div class="loading">Загрузка корзины...</div>
+    </div>
+
+    <div class="cart-total" style="display: none;" id="cart-total-section">
+        <div class="total-label">Итого:</div>
+        <div class="total-amount" id="cart-total">0 руб.</div>
+        
+        <div class="cashback-info">
+            Кешбек с покупки: <span id="cashback-amount">0 руб.</span>
+        </div>
+        
+        <!-- Опция оплаты с баланса -->
+        <div class="balance-payment" id="balance-payment-section" style="display: none;">
+            <div class="balance-info">
+                <div class="balance-label">Ваш баланс:</div>
+                <div class="balance-amount" id="available-balance">0 руб.</div>
+            </div>
+            <label class="checkbox-container">
+                <input type="checkbox" id="use-balance-checkbox">
+                <span class="checkmark"></span>
+                <span class="checkbox-label">Оплатить с баланса</span>
+            </label>
+            <div class="remaining-balance" id="remaining-balance" style="display: none;">
+                Останется на балансе: <span id="remaining-amount">0 руб.</span>
+            </div>
+        </div>
+        
+        <button class="checkout-btn" id="checkout-btn">
+            Оформить заказ
+        </button>
+    </div>
+
+    <div class="empty-cart" style="display: none;" id="empty-cart">
+        <div class="empty-icon">🛒</div>
+        <h3>Корзина пуста</h3>
+        <p>Добавьте товары из каталога</p>
+        <a href="{{ url_for('catalog') }}" class="browse-btn">
+            Перейти в каталог
+        </a>
+    </div>
+</div>
+
+<!-- Модальное окно оформления заказа -->
+<div class="modal" id="order-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Оформление заказа</h2>
+            <button class="close-btn" onclick="closeModalGlobal()">×</button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="order-form" class="order-form">
+                <div class="order-steps">
+                    <div class="order-step active" id="step-customer">
+                        <h3>1. Ваши данные</h3>
+                        <div class="form-group">
+                            <label for="customer-name">Ваше имя *</label>
+                            <input type="text" id="customer-name" required placeholder="Иван Иванов">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer-phone">Номер телефона *</label>
+                            <input type="tel" id="customer-phone" required placeholder="+7 (999) 999-99-99">
+                        </div>
+                        
+                        <button type="button" class="next-step-btn" onclick="nextOrderStepGlobal('delivery')">
+                            Далее →
+                        </button>
+                    </div>
+                    
+                    <div class="order-step" id="step-delivery" style="display: none;">
+                        <h3>2. Способ получения</h3>
+                        <div class="delivery-type-selector">
+                            <button type="button" class="delivery-type-btn active" data-type="pickup" onclick="setDeliveryTypeGlobal('pickup')">
+                                🏪 Самовывоз
+                            </button>
+                            <button type="button" class="delivery-type-btn" data-type="delivery" onclick="setDeliveryTypeGlobal('delivery')">
+                                🚚 Доставка
+                            </button>
+                        </div>
+                        
+                        <button type="button" class="prev-step-btn" onclick="prevOrderStepGlobal('customer')">
+                            ← Назад
+                        </button>
+                        <button type="button" class="next-step-btn" onclick="nextOrderStepGlobal('city')">
+                            Далее →
+                        </button>
+                    </div>
+                    
+                    <div class="order-step" id="step-city" style="display: none;">
+                        <h3>3. Выбор города</h3>
+                        <div class="city-selector" id="city-selector">
+                            <div class="loading-cities">Загрузка городов...</div>
+                        </div>
+                        
+                        <div class="step-info" id="city-info" style="display: none;">
+                            Выбран город: <span id="selected-city-name"></span>
+                        </div>
+                        
+                        <button type="button" class="prev-step-btn" onclick="prevOrderStepGlobal('delivery')">
+                            ← Назад
+                        </button>
+                        <button type="button" class="next-step-btn" id="next-city-btn" disabled onclick="nextOrderStepGlobal('location')">
+                            Далее →
+                        </button>
+                    </div>
+                    
+                    <div class="order-step" id="step-location" style="display: none;">
+                        <h3>4. Выбор пункта</h3>
+                        <div id="pickup-section">
+                            <div class="form-group">
+                                <label for="pickup-location">Пункт выдачи *</label>
+                                <select id="pickup-location" required>
+                                    <option value="">Выберите пункт выдачи</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="delivery-section" style="display: none;">
+                            <div class="form-group">
+                                <label for="delivery-address">Адрес доставки *</label>
+                                <input type="text" id="delivery-address" placeholder="ул. Ленина, д. 10, кв. 5">
+                            </div>
+                            <div class="delivery-price-info">
+                                Стоимость доставки: <span id="delivery-price-amount">0</span> руб.
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="prev-step-btn" onclick="prevOrderStepGlobal('city')">
+                            ← Назад
+                        </button>
+                        <button type="button" class="next-step-btn" onclick="nextOrderStepGlobal('summary')">
+                            Далее →
+                        </button>
+                    </div>
+                    
+                    <div class="order-step" id="step-summary" style="display: none;">
+                        <h3>5. Подтверждение заказа</h3>
+                        
+                        <!-- Информация о верификации -->
+                        <div class="verification-warning" id="verification-warning" style="display: none;">
+                            <div class="warning-icon">⚠️</div>
+                            <div class="warning-content">
+                                <div class="warning-title">Вы не верифицированы!</div>
+                                <div class="warning-text">
+                                    Для оформления заказа необходимо пройти верификацию.
+                                    Обратитесь к администратору в Telegram:
+                                </div>
+                                <a href="https://t.me/Danil_623" class="admin-contact" target="_blank">
+                                    💬 Написать @Danil_623
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="order-summary">
+                            <h4>Ваш заказ:</h4>
+                            <div id="order-items-list"></div>
+                            <div class="summary-row">
+                                <span>Товары:</span>
+                                <span id="order-subtotal">0 руб.</span>
+                            </div>
+                            <div class="summary-row" id="delivery-fee-row" style="display: none;">
+                                <span>Доставка:</span>
+                                <span id="delivery-fee">0 руб.</span>
+                            </div>
+                            <div class="summary-total">
+                                <span>Итого к оплате:</span>
+                                <span id="final-total">0 руб.</span>
+                            </div>
+                            
+                            <!-- Кешбек по лояльности -->
+                            <div class="loyalty-cashback-info">
+                                <div class="loyalty-level-info">
+                                    <span>Ваш уровень лояльности:</span>
+                                    <span class="loyalty-level" id="summary-loyalty-level">Новичок (0.5%)</span>
+                                </div>
+                                <div class="cashback-summary">
+                                    <span>Вы получите кешбек:</span>
+                                    <span id="summary-cashback">0 руб.</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Оплата с баланса -->
+                            <div class="balance-payment-summary" id="balance-payment-summary">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="use-balance-final">
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-label">Оплатить с баланса</span>
+                                </label>
+                                <div class="balance-payment-details">
+                                    <div class="balance-detail">
+                                        <span>Ваш баланс:</span>
+                                        <span id="summary-balance">0 руб.</span>
+                                    </div>
+                                    <div class="balance-detail" id="balance-after-payment" style="display: none;">
+                                        <span>Останется на балансе:</span>
+                                        <span id="summary-remaining">0 руб.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="order-details-summary">
+                            <h4>Данные заказа:</h4>
+                            <div class="detail-item">
+                                <span>Имя:</span>
+                                <span id="summary-name">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Телефон:</span>
+                                <span id="summary-phone">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Способ получения:</span>
+                                <span id="summary-delivery-type">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Город:</span>
+                                <span id="summary-city">-</span>
+                            </div>
+                            <div class="detail-item" id="summary-pickup-item">
+                                <span>Пункт выдачи:</span>
+                                <span id="summary-pickup">-</span>
+                            </div>
+                            <div class="detail-item" id="summary-address-item" style="display: none;">
+                                <span>Адрес доставки:</span>
+                                <span id="summary-address">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="button" class="prev-step-btn" onclick="prevOrderStepGlobal('location')">
+                                ← Назад
+                            </button>
+                            <button type="submit" class="submit-order-btn" id="submit-order-btn">
+                                Подтвердить заказ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.cart-items {
+    padding: 0 15px;
+}
+
+.cart-item {
+    display: flex;
+    background: #1a1a1a;
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    align-items: center;
+}
+
+.cart-item-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-right: 15px;
+    flex-shrink: 0;
+    background: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-item-image img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: scale-down;
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-info h4 {
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.item-price {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-btn {
+    background: #333;
+    border: none;
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.quantity-btn:hover {
+    background: #444;
+}
+
+.item-total {
+    font-weight: bold;
+    color: #00ff88;
+    margin-left: 15px;
+    font-size: 15px;
+    min-width: 60px;
+    text-align: right;
+}
+
+.cart-total {
+    background: #1a1a1a;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    text-align: center;
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    z-index: 900;
+}
+
+.total-label {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.total-amount {
+    font-size: 24px;
+    color: #00ff88;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.cashback-info {
+    margin: 10px 0;
+    font-size: 14px;
+    color: #888;
+}
+
+.cashback-info span {
+    color: #00ff88;
+    font-weight: bold;
+}
+
+/* Оплата с баланса */
+.balance-payment {
+    margin: 15px 0;
+    padding: 15px;
+    background: #2a2a2a;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.balance-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.balance-label {
+    font-size: 14px;
+    color: #888;
+}
+
+.balance-amount {
+    font-size: 16px;
+    color: #00ff88;
+    font-weight: bold;
+}
+
+.checkbox-container {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin: 15px 0;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+}
+
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 22px;
+    width: 22px;
+    background-color: #2a2a2a;
+    border: 2px solid #444;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+    border-color: #00ff88;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+    background-color: #00ff88;
+    border-color: #00ff88;
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.checkbox-container .checkmark:after {
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid #000;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-label {
+    color: #fff;
+    font-weight: 500;
+}
+
+.remaining-balance {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(0, 255, 136, 0.1);
+    border-radius: 8px;
+    color: #00ff88;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.remaining-balance span {
+    font-weight: bold;
+}
+
+.checkout-btn {
+    background: linear-gradient(45deg, #00ff88, #00cc66);
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: bold;
+    width: 100%;
+    margin-top: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.checkout-btn:hover {
+    box-shadow: 0 5px 15px rgba(0,255,136,0.3);
+}
+
+.checkout-btn:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.checkout-btn:disabled:hover {
+    box-shadow: none;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 60px 20px;
+    color: #888;
+}
+
+.empty-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-cart h3 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #fff;
+}
+
+.empty-cart p {
+    color: #888;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+.browse-btn {
+    display: inline-block;
+    background: #00ff88;
+    color: #000;
+    padding: 15px 30px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.browse-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,255,136,0.3);
+}
+
+/* Модальное окно с прокруткой */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 85vh;
+    border: 1px solid #333;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #333;
+    position: sticky;
+    top: 0;
+    background: #1a1a1a;
+    border-radius: 20px 20px 0 0;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.modal-header h2 {
+    flex: 1;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.close-btn:hover {
+    background: #333;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px 20px 20px;
+    max-height: calc(85vh - 80px);
+}
+
+/* Шаги оформления */
+.order-steps {
+    padding: 10px 0;
+}
+
+.order-step {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.order-step h3 {
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #00ff88;
+}
+
+/* Предупреждение о верификации */
+.verification-warning {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.warning-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.warning-content {
+    flex: 1;
+}
+
+.warning-title {
+    font-weight: bold;
+    color: #ff4444;
+    margin-bottom: 5px;
+    font-size: 15px;
+}
+
+.warning-text {
+    color: #ccc;
+    font-size: 13px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.admin-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #0088cc;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.admin-contact:hover {
+    background: #0099dd;
+    transform: translateY(-2px);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: white;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #00ff88;
+    box-shadow: 0 0 0 2px rgba(0,255,136,0.1);
+}
+
+.delivery-type-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.delivery-type-btn {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #333;
+    background: #2a2a2a;
+    color: #888;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.delivery-type-btn.active {
+    background: #00ff88;
+    color: #000;
+    border-color: #00ff88;
+}
+
+.city-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.city-btn {
+    padding: 12px;
+    border: 1px solid #333;
+    background: #2a2a2a;
+    color: #888;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.city-btn.active {
+    background: #00ff88;
+    color: #000;
+    border-color: #00ff88;
+}
+
+.step-info {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 20px;
+    color: #00ff88;
+    font-size: 14px;
+}
+
+.delivery-price-info {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    color: #667eea;
+    font-size: 14px;
+}
+
+/* Кнопки навигации */
+.next-step-btn,
+.prev-step-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    font-size: 14px;
+}
+
+.next-step-btn {
+    background: #00ff88;
+    color: #000;
+    float: right;
+}
+
+.prev-step-btn {
+    background: #333;
+    color: #fff;
+    float: left;
+}
+
+.next-step-btn:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.next-step-btn:hover:not(:disabled),
+.prev-step-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Сводка заказа */
+.order-summary {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 1px solid #333;
+}
+
+.order-summary h4 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+}
+
+#order-items-list {
+    margin-bottom: 15px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+#order-items-list .order-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #333;
+    font-size: 14px;
+    color: #ddd;
+    display: flex;
+    justify-content: space-between;
+}
+
+#order-items-list .order-item:last-child {
+    border-bottom: none;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #333;
+    font-weight: bold;
+    font-size: 18px;
+    color: #00ff88;
+}
+
+/* Кешбек по лояльности */
+.loyalty-cashback-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(0, 255, 136, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.loyalty-level-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.loyalty-level {
+    color: #00ff88;
+    font-weight: bold;
+    font-size: 13px;
+    background: rgba(0, 255, 136, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.cashback-summary {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(0, 255, 136, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    color: #00ff88;
+}
+
+/* Оплата с баланса в модальном окне */
+.balance-payment-summary {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.balance-payment-details {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.balance-detail {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.order-details-summary {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 1px solid #333;
+}
+
+.order-details-summary h4 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #333;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.submit-order-btn {
+    background: linear-gradient(45deg, #00ff88, #00cc66);
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: bold;
+    width: 100%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    flex: 1;
+}
+
+.submit-order-btn:hover {
+    box-shadow: 0 5px 15px rgba(0,255,136,0.3);
+}
+
+.submit-order-btn:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.submit-order-btn:disabled:hover {
+    box-shadow: none;
+}
+
+.loading-cities {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+    grid-column: span 2;
+}
+
+/* Полоса прокрутки */
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #00ff88;
+    border-radius: 3px;
+}
+
+/* Адаптивность */
+@media (max-width: 360px) {
+    .cart-items {
+        padding: 0 10px;
+    }
+    
+    .cart-item {
+        padding: 12px;
+    }
+    
+    .cart-item-image {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .cart-total {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .modal {
+        padding: 5px;
+    }
+    
+    .modal-content {
+        max-height: 90vh;
+    }
+    
+    .modal-body {
+        max-height: calc(90vh - 80px);
+        padding: 0 15px 15px 15px;
+    }
+    
+    .modal-header {
+        padding: 15px;
+    }
+    
+    .city-selector {
+        grid-template-columns: 1fr;
+    }
+    
+    .delivery-type-selector {
+        flex-direction: column;
+    }
+    
+    .balance-payment {
+        padding: 12px;
+    }
+}
+
+@media (min-width: 768px) {
+    .modal-content {
+        max-width: 500px;
+    }
+}
+</style>
+
+<script>
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация навигации
+    vapeShop.highlightActiveNav();
+    
+    // Настройка обработчиков для этой страницы
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const orderForm = document.getElementById('order-form');
+    
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', async function() {
+            // Проверяем верификацию перед открытием модального окна
+            const isVerified = await vapeShop.checkVerification();
+            if (!isVerified) {
+                vapeShop.showNotification('Вы не верифицированы. Обратитесь к администратору @Danil_623', 'error');
+                return;
+            }
+            vapeShop.openOrderModal();
+        });
+    }
+    
+    if (orderForm) {
+        orderForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            vapeShop.submitOrder(e);
+        });
+    }
+    
+    // Обработчики для оплаты с баланса
+    const useBalanceCheckbox = document.getElementById('use-balance-checkbox');
+    const useBalanceFinal = document.getElementById('use-balance-final');
+    
+    if (useBalanceCheckbox) {
+        useBalanceCheckbox.addEventListener('change', function() {
+            vapeShop.updateBalancePayment();
+        });
+    }
+    
+    if (useBalanceFinal) {
+        useBalanceFinal.addEventListener('change', function() {
+            vapeShop.updateBalancePayment();
+            vapeShop.updateOrderSummary();
+        });
+    }
+    
+    // Загрузка корзины при открытии страницы
+    if (window.location.pathname === '/cart') {
+        vapeShop.loadCart();
+    }
+});
+
+// Глобальные функции для onclick атрибутов в HTML
+// Это нужно для кнопок в корзине и модальном окне
+
+function updateQuantityInCart(productId, newQuantity) {
+    vapeShop.updateQuantity(productId, newQuantity);
+}
+
+function removeFromCartItem(productId) {
+    vapeShop.removeFromCart(productId);
+}
+
+function openOrderModalGlobal() {
+    vapeShop.openOrderModal();
+}
+
+function closeModalGlobal() {
+    vapeShop.closeModal();
+}
+
+function selectCityGlobal(city) {
+    vapeShop.selectCity(city);
+}
+
+function setDeliveryTypeGlobal(type) {
+    vapeShop.setDeliveryType(type);
+}
+
+function nextOrderStepGlobal(nextStepId) {
+    vapeShop.nextOrderStep(nextStepId);
+}
+
+function prevOrderStepGlobal(prevStepId) {
+    vapeShop.prevOrderStep(prevStepId);
+}
+
+function showOrderStepGlobal(stepId) {
+    vapeShop.showOrderStep(stepId);
+}
+
+// Специальные функции для рендеринга корзины (будут вызваны из vapeShop)
+// Эти функции НЕ вызываем напрямую, только через vapeShop
+
+// Функция для обновления отображения корзины (вызывается из vapeShop.renderCart())
+window.renderCartItems = function(cart) {
+    const cartItems = document.getElementById('cart-items');
+    const cartTotalSection = document.getElementById('cart-total-section');
+    const emptyCart = document.getElementById('empty-cart');
+    const balancePaymentSection = document.getElementById('balance-payment-section');
+    const availableBalance = document.getElementById('available-balance');
+    
+    if (!cart.items || cart.items.length === 0) {
+        if (cartItems) cartItems.style.display = 'none';
+        if (cartTotalSection) cartTotalSection.style.display = 'none';
+        if (balancePaymentSection) balancePaymentSection.style.display = 'none';
+        if (emptyCart) emptyCart.style.display = 'block';
+        return;
+    }
+    
+    if (emptyCart) emptyCart.style.display = 'none';
+    if (cartTotalSection) cartTotalSection.style.display = 'block';
+    
+    // Показываем раздел оплаты с баланса
+    if (balancePaymentSection) {
+        balancePaymentSection.style.display = 'block';
+        // Загружаем баланс пользователя
+        vapeShop.loadUserBalance();
+    }
+    
+    if (cartItems) {
+        cartItems.style.display = 'block';
+        cartItems.innerHTML = cart.items.map(item => `
+            <div class="cart-item">
+                <div class="cart-item-image">
+                    <img src="${item.image}" alt="${item.name}" onerror="this.src='/static/images/default-product.png'">
+                </div>
+                <div class="cart-item-info">
+                    <h4>${item.name}</h4>
+                    <div class="item-price">${item.price} руб. × ${item.quantity}</div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="updateQuantityInCart(${item.id}, ${item.quantity - 1})">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="quantity-btn" onclick="updateQuantityInCart(${item.id}, ${item.quantity + 1})">+</button>
+                    </div>
+                </div>
+                <div class="item-total">${item.total} руб.</div>
+            </div>
+        `).join('');
+    }
+    
+    if (document.getElementById('cart-total')) {
+        document.getElementById('cart-total').textContent = cart.total + ' руб.';
+    }
+    if (document.getElementById('cashback-amount')) {
+        // Рассчитываем кешбек по системе лояльности
+        vapeShop.updateLoyaltyCashback(cart.total);
+    }
+    
+    // Обновляем информацию о балансе
+    if (availableBalance && vapeShop.userBalance !== undefined) {
+        availableBalance.textContent = vapeShop.userBalance + ' руб.';
+    }
+    
+    // Обновляем оплату с баланса
+    vapeShop.updateBalancePayment();
+};
+
+// Функция для отображения городов (вызывается из vapeShop.loadCities())
+window.renderCities = function(cities) {
+    const citySelector = document.getElementById('city-selector');
+    if (!citySelector) return;
+    
+    if (cities.length === 0) {
+        citySelector.innerHTML = '<div class="loading-cities">Нет доступных городов</div>';
+        return;
+    }
+    
+    citySelector.innerHTML = cities.map(city => `
+        <button type="button" class="city-btn" onclick="selectCityGlobal('${city}')">
+            ${city}
+        </button>
+    `).join('');
+};
+
+// Функция для обновления информации о выбранном городе
+window.updateSelectedCityUI = function(city) {
+    const cityInfo = document.getElementById('city-info');
+    const selectedCityName = document.getElementById('selected-city-name');
+    
+    if (cityInfo && selectedCityName) {
+        selectedCityName.textContent = city;
+        cityInfo.style.display = 'block';
+    }
+    
+    // Обновить активные кнопки городов
+    const cityButtons = document.querySelectorAll('.city-btn');
+    cityButtons.forEach(btn => {
+        if (btn.textContent.trim() === city) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Обновить кнопку Далее
+    const nextBtn = document.getElementById('next-city-btn');
+    if (nextBtn) {
+        nextBtn.disabled = !city;
+    }
+};
+
+// Функция для отображения пунктов выдачи (вызывается из vapeShop.loadPickupLocations())
+window.renderPickupLocations = function(locations) {
+    const pickupLocationSelect = document.getElementById('pickup-location');
+    if (!pickupLocationSelect) return;
+    
+    pickupLocationSelect.innerHTML = '<option value="">Выберите пункт выдачи</option>';
+    
+    if (locations.length === 0) {
+        pickupLocationSelect.innerHTML += '<option value="" disabled>Нет доступных пунктов</option>';
+        pickupLocationSelect.disabled = true;
+    } else {
+        locations.forEach(loc => {
+            pickupLocationSelect.innerHTML += `<option value="${loc.id}">${loc.name} - ${loc.address}</option>`;
+        });
+        pickupLocationSelect.disabled = false;
+    }
+};
+
+// Функция для обновления сводки заказа
+window.updateOrderSummaryUI = function(data) {
+    const orderItemsList = document.getElementById('order-items-list');
+    const orderSubtotal = document.getElementById('order-subtotal');
+    const deliveryFeeRow = document.getElementById('delivery-fee-row');
+    const deliveryFee = document.getElementById('delivery-fee');
+    const finalTotal = document.getElementById('final-total');
+    const summaryCashback = document.getElementById('summary-cashback');
+    const summaryLoyaltyLevel = document.getElementById('summary-loyalty-level');
+    const summaryBalance = document.getElementById('summary-balance');
+    const summaryRemaining = document.getElementById('summary-remaining');
+    const balanceAfterPayment = document.getElementById('balance-after-payment');
+    const useBalanceFinal = document.getElementById('use-balance-final');
+    
+    if (!orderItemsList || !orderSubtotal) return;
+    
+    let itemsHtml = '';
+    let subtotal = 0;
+    
+    if (data.cart && data.cart.items) {
+        data.cart.items.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+            itemsHtml += `
+                <div class="order-item">
+                    <span>${item.name} × ${item.quantity}</span>
+                    <span>${itemTotal} руб.</span>
+                </div>
+            `;
+        });
+    }
+    
+    orderItemsList.innerHTML = itemsHtml;
+    orderSubtotal.textContent = subtotal + ' руб.';
+    
+    const deliveryPrice = data.deliveryPrice || 0;
+    const total = subtotal + deliveryPrice;
+    
+    if (deliveryPrice > 0) {
+        if (deliveryFeeRow) deliveryFeeRow.style.display = 'flex';
+        if (deliveryFee) deliveryFee.textContent = deliveryPrice + ' руб.';
+    } else {
+        if (deliveryFeeRow) deliveryFeeRow.style.display = 'none';
+    }
+    
+    if (finalTotal) {
+        finalTotal.textContent = total + ' руб.';
+    }
+    
+    // Обновляем информацию о кешбеке
+    const cashbackData = vapeShop.calculateLoyaltyCashback(total);
+    if (summaryCashback) {
+        summaryCashback.textContent = cashbackData.amount.toFixed(2) + ' руб.';
+    }
+    if (summaryLoyaltyLevel) {
+        summaryLoyaltyLevel.textContent = cashbackData.level + ' (' + (cashbackData.rate * 100).toFixed(1) + '%)';
+    }
+    
+    // Обновляем информацию о балансе
+    if (summaryBalance && vapeShop.userBalance !== undefined) {
+        summaryBalance.textContent = vapeShop.userBalance + ' руб.';
+    }
+    
+    // Обновляем оплату с баланса
+    if (useBalanceFinal && useBalanceFinal.checked) {
+        if (summaryRemaining && vapeShop.userBalance !== undefined) {
+            const remaining = vapeShop.userBalance - total;
+            summaryRemaining.textContent = remaining.toFixed(2) + ' руб.';
+            balanceAfterPayment.style.display = 'flex';
+        }
+    } else {
+        balanceAfterPayment.style.display = 'none';
+    }
+};
+
+// Функция для обновления сводки данных заказа
+window.updateOrderDetailsSummaryUI = function(data) {
+    const name = document.getElementById('customer-name');
+    const phone = document.getElementById('customer-phone');
+    const pickupSelect = document.getElementById('pickup-location');
+    const deliveryAddress = document.getElementById('delivery-address');
+    
+    if (name && name.value) {
+        const summaryName = document.getElementById('summary-name');
+        if (summaryName) summaryName.textContent = name.value;
+    }
+    
+    if (phone && phone.value) {
+        const summaryPhone = document.getElementById('summary-phone');
+        if (summaryPhone) summaryPhone.textContent = phone.value;
+    }
+    
+    const deliveryType = data.deliveryType || 'pickup';
+    const deliveryTypeText = deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
+    const summaryDeliveryType = document.getElementById('summary-delivery-type');
+    if (summaryDeliveryType) summaryDeliveryType.textContent = deliveryTypeText;
+    
+    const selectedCity = data.selectedCity || null;
+    const summaryCity = document.getElementById('summary-city');
+    if (summaryCity) summaryCity.textContent = selectedCity || '-';
+    
+    if (deliveryType === 'pickup') {
+        const summaryPickupItem = document.getElementById('summary-pickup-item');
+        const summaryAddressItem = document.getElementById('summary-address-item');
+        if (summaryPickupItem) summaryPickupItem.style.display = 'flex';
+        if (summaryAddressItem) summaryAddressItem.style.display = 'none';
+        
+        const summaryPickup = document.getElementById('summary-pickup');
+        if (pickupSelect && pickupSelect.value && summaryPickup) {
+            const selectedOption = pickupSelect.options[pickupSelect.selectedIndex];
+            summaryPickup.textContent = selectedOption.text || '-';
+        } else if (summaryPickup) {
+            summaryPickup.textContent = '-';
+        }
+    } else {
+        const summaryPickupItem = document.getElementById('summary-pickup-item');
+        const summaryAddressItem = document.getElementById('summary-address-item');
+        if (summaryPickupItem) summaryPickupItem.style.display = 'none';
+        if (summaryAddressItem) summaryAddressItem.style.display = 'flex';
+        
+        const summaryAddress = document.getElementById('summary-address');
+        if (deliveryAddress && deliveryAddress.value && summaryAddress) {
+            summaryAddress.textContent = deliveryAddress.value || '-';
+        } else if (summaryAddress) {
+            summaryAddress.textContent = '-';
+        }
+    }
+};
+
+// Функция для обновления информации о доставке
+window.updateDeliveryPriceUI = function(price) {
+    const deliveryPriceElement = document.getElementById('delivery-price-amount');
+    if (deliveryPriceElement) {
+        deliveryPriceElement.textContent = price;
+    }
+};
+
+// Функция для отображения шагов оформления заказа
+window.showOrderStepUI = function(stepId) {
+    document.querySelectorAll('.order-step').forEach(step => {
+        step.style.display = 'none';
+        step.classList.remove('active');
+    });
+    
+    const step = document.getElementById(`step-${stepId}`);
+    if (step) {
+        step.style.display = 'block';
+        step.classList.add('active');
+    }
+};
+
+// Функция для обновления информации о верификации
+window.updateVerificationWarning = function(isVerified) {
+    const verificationWarning = document.getElementById('verification-warning');
+    const submitOrderBtn = document.getElementById('submit-order-btn');
+    
+    if (verificationWarning) {
+        verificationWarning.style.display = isVerified ? 'none' : 'flex';
+    }
+    
+    if (submitOrderBtn) {
+        submitOrderBtn.disabled = !isVerified;
+        submitOrderBtn.textContent = isVerified ? 'Подтвердить заказ' : 'Верификация требуется';
+    }
+};
+</script>
+{% endblock %}
